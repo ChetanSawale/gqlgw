@@ -1,0 +1,29 @@
+name: Feature request
+description: Propose a change or an addition.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Some things are out of scope by design: subscriptions, federation, several memcached
+        servers, an nginx C module (see
+        [Conformance and limits](https://abusi.github.io/gqlgw/project/conformance/)).
+        For open-ended ideas, [Discussions](https://github.com/abusi/gqlgw/discussions) is a
+        better place.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: How it could look in the schema, in gqlgw.toml or in the generated configuration.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds and alternatives
+      description: What you do today (sources.d, server.d, hand-written nginx…).

@@ -6,7 +6,7 @@
 --   location /_src/users/ { internal; proxy_pass http://users_svc$gqlgw_path; }
 --   log_by_lua_block     { require("gqlgw").log() }          -- optional
 --
--- See PLAN.md and conf/nginx.conf.example.
+-- See https://abusi.github.io/gqlgw/ and conf/nginx.conf.example.
 local ffi = require "ffi"
 local gffi = require "gqlgw.ffi"
 local schema = require "gqlgw.schema"

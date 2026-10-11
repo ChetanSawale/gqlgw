@@ -2,6 +2,8 @@
 #
 #   make image        (docker build -t gqlgw:<version> -t gqlgw:latest .)
 #
+# Releases are published as ghcr.io/abusi/gqlgw:<version> (.github/workflows/release.yml).
+#
 # Gateways are built FROM this image (see examples/docker/Dockerfile):
 #   FROM gqlgw:<version>
 #   COPY schema.graphqls gqlgw.toml /etc/gqlgw/
@@ -22,6 +24,8 @@ RUN make -j"$(nproc)" all CFLAGS="-O2" PREFIX=/usr/local \
 FROM ${OPENRESTY_IMAGE}
 LABEL org.opencontainers.image.title="gqlgw" \
       org.opencontainers.image.description="SDL-first GraphQL gateway on OpenResty" \
+      org.opencontainers.image.source="https://github.com/abusi/gqlgw" \
+      org.opencontainers.image.documentation="https://abusi.github.io/gqlgw/" \
       org.opencontainers.image.licenses="BSD-2-Clause"
 COPY --from=build /src/build/gqlc /usr/local/bin/gqlc
 COPY --from=build /src/build/libgql.so /usr/local/lib/gqlgw/libgql.so

@@ -3,6 +3,7 @@
 #   docker build -t my-gateway .
 #   docker run -p 8080:8080 -p 8191:8191 \
 #       -e USERS_URL=http://users:8080 -e POSTS_URL=http://posts:8080 my-gateway
+# the base image: gqlgw:latest (make image), or a release: ghcr.io/abusi/gqlgw:<version>
 ARG GQLGW_IMAGE=gqlgw:latest
 FROM ${GQLGW_IMAGE}
 COPY schema.graphqls gqlgw.toml /etc/gqlgw/

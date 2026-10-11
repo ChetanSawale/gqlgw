@@ -1,13 +1,25 @@
 # Docker image
 
-`make image` builds `gqlgw:<version>` and `gqlgw:latest` locally from the official
-`openresty/openresty:1.31.1.1-resolute` image (Ubuntu, glibc). The image contains the gateway
-but no schema: you build your gateway **from** it.
+Releases are published on the GitHub container registry, for `linux/amd64` and `linux/arm64`:
+
+```bash
+docker pull ghcr.io/abusi/gqlgw:0.2.0
+```
+
+| Tag | |
+|---|---|
+| `0.2.0` | one release |
+| `0.2` | the latest `0.2.x` |
+| `latest` | the latest release |
+
+`make image` builds the same image locally, as `gqlgw:<version>` and `gqlgw:latest`. Both start
+from the official `openresty/openresty:1.31.1.1-resolute` image (Ubuntu, glibc). The image
+contains the gateway but no schema: you build your gateway **from** it.
 
 ```mermaid
 flowchart LR
     base["openresty/openresty:1.31.1.1-resolute"] --> b["build stage<br/>+ gcc, make<br/>make all"]
-    base --> img["gqlgw:0.2.0<br/>gqlc · libgql.so · lua/gqlgw<br/>nginx.conf · entrypoint"]
+    base --> img["ghcr.io/abusi/gqlgw:0.2.0<br/>gqlc · libgql.so · lua/gqlgw<br/>nginx.conf · entrypoint"]
     b -- "gqlc, libgql.so" --> img
     img --> yours["my-gateway<br/>+ schema.graphqls, gqlgw.toml<br/>RUN gqlc compile"]
 ```
@@ -27,7 +39,7 @@ flowchart LR
 ## Your gateway
 
 ```dockerfile
-FROM gqlgw:0.2.0
+FROM ghcr.io/abusi/gqlgw:0.2.0
 COPY schema.graphqls gqlgw.toml /etc/gqlgw/
 RUN gqlc compile -c /etc/gqlgw/gqlgw.toml /etc/gqlgw/schema.graphqls
 # optional:
@@ -74,9 +86,19 @@ The example of the repository runs the gateway with memcached and a mock backend
 --8<-- "examples/docker/compose.yaml"
 ```
 
+## Provenance
+
+Each release image carries a signed SLSA build provenance attestation, which ties it to the
+workflow run and the commit that built it:
+
+```bash
+gh attestation verify oci://ghcr.io/abusi/gqlgw:0.2.0 -R abusi/gqlgw
+```
+
 ## Testing the image
 
 `make docker-test` builds the image and the example, starts **two** read-only gateways that share
 memcached, and checks: queries, batching, the L3 cache seen from the second gateway, metrics,
 purge, the non-root user, the `0600` rendered files, the refusal to start without `USERS_URL`,
-and command passthrough. The CI runs it on every pull request.
+and command passthrough. The CI runs it on every pull request, and the release workflow before
+publishing an image.

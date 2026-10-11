@@ -1,14 +1,20 @@
 # Getting started
 
-You need Docker (with the `compose` plugin) and a clone of the repository. Nothing is published
-on a registry: the base image is built locally.
+You need Docker (with the `compose` plugin) and a clone of the repository, for the example.
 
-## 1. Build the base image
+## 1. Get the base image
 
-```bash
-git clone https://github.com/abusi/gqlgw && cd gqlgw
-make image            # docker build -t gqlgw:<version> -t gqlgw:latest .
-```
+=== "Published image"
+
+    ```bash
+    docker pull ghcr.io/abusi/gqlgw:0.2.0     # linux/amd64, linux/arm64
+    ```
+
+=== "Local build"
+
+    ```bash
+    make image            # docker build -t gqlgw:<version> -t gqlgw:latest .
+    ```
 
 The image is built from the official `openresty/openresty:1.31.1.1-resolute`. It adds `gqlc`,
 `libgql.so` and the Lua modules. It holds no schema: a gateway is an image built **from** it.
@@ -19,8 +25,8 @@ The image is built from the official `openresty/openresty:1.31.1.1-resolute`. It
 services, and memcached is the shared cache.
 
 ```bash
-cd examples/docker
-docker compose up --build
+git clone https://github.com/abusi/gqlgw && cd gqlgw/examples/docker
+GQLGW_IMAGE=ghcr.io/abusi/gqlgw:0.2.0 docker compose up --build   # or, after make image: docker compose up --build
 ```
 
 ```mermaid
@@ -85,10 +91,12 @@ A gateway is three files: your schema, your `gqlgw.toml`, and a three-line Docke
     ```
 
 ```bash
-docker build -t my-gateway .
+docker build --build-arg GQLGW_IMAGE=ghcr.io/abusi/gqlgw:0.2.0 -t my-gateway .
 docker run --read-only --tmpfs /tmp -p 8080:8080 -p 8191:8191 \
     -e USERS_URL=http://users:8080 -e POSTS_URL=http://posts:8080 my-gateway
 ```
+
+In your own repository, write the base image directly: `FROM ghcr.io/abusi/gqlgw:0.2.0`.
 
 What happens at each step:
 

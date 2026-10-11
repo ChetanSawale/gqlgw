@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/abusi/gqlgw/discussions
+    about: Ask how to do something, or discuss an idea before opening an issue.
+  - name: Documentation
+    url: https://abusi.github.io/gqlgw/
+    about: How it works, examples and the configuration reference.
+  - name: Security report
+    url: https://github.com/abusi/gqlgw/security/advisories/new
+    about: Report a vulnerability privately.

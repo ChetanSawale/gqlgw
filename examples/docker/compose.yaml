@@ -2,12 +2,17 @@
 #
 #   make image                       # builds gqlgw:latest, the base image
 #   docker compose up --build
+# or, with the published image instead of a local build:
+#   GQLGW_IMAGE=ghcr.io/abusi/gqlgw:0.2.0 docker compose up --build
 #   curl -s localhost:8080/graphql -H 'Content-Type: application/json' \
 #        -d '{"query":"{ posts(limit: 3) { title author { name } } }"}'
 #   curl -s localhost:8191/gqlgw_metrics
 services:
   gateway:
-    build: .
+    build:
+      context: .
+      args:
+        GQLGW_IMAGE: ${GQLGW_IMAGE:-gqlgw:latest}
     ports:
       - "8080:8080"
       - "8191:8191"

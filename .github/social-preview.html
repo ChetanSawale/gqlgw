@@ -1,0 +1,80 @@
+<!doctype html>
+<!-- Source of social-preview.png (1280x640, GitHub "Social preview"):
+     google-chrome --headless=new --hide-scrollbars --window-size=1280,640 \
+       --screenshot=.github/social-preview.png .github/social-preview.html -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #30363d; --fg: #e6edf3; --muted: #8b949e;
+    --accent: #e535ab; --accent2: #58a6ff; --green: #3fb950; --orange: #d29922;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 640px; background: var(--bg); color: var(--fg);
+    font-family: "Inter", "DejaVu Sans", "Liberation Sans", sans-serif; overflow: hidden; }
+  body { padding: 64px 64px 64px 72px; display: grid; grid-template-columns: 1fr 560px; gap: 40px; }
+  .brand { display: flex; align-items: center; gap: 20px; }
+  .mark { width: 72px; height: 72px; }
+  h1 { font-size: 76px; font-weight: 800; letter-spacing: -2px; }
+  .tag { margin-top: 28px; font-size: 30px; line-height: 1.35; font-weight: 600; }
+  .tag em { font-style: normal; color: var(--accent); }
+  .facts { margin-top: 40px; display: grid; gap: 14px; font-size: 22px; color: var(--muted); }
+  .facts b { color: var(--fg); font-weight: 600; }
+  .url { position: absolute; left: 72px; bottom: 52px; font-size: 22px; color: var(--accent2);
+    font-family: "DejaVu Sans Mono", monospace; }
+  .right { display: flex; flex-direction: column; gap: 22px; justify-content: center; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px 26px;
+    font: 17px/1.55 "DejaVu Sans Mono", "Liberation Mono", monospace; color: var(--fg); }
+  .k { color: #ff7b72; } .t { color: #79c0ff; } .d { color: var(--accent); } .s { color: #a5d6ff; }
+  .flow { display: grid; grid-template-columns: auto 1fr auto 1fr auto; align-items: center; gap: 10px;
+    font-size: 19px; }
+  .box { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 12px 14px;
+    text-align: center; }
+  .box.gw { border-color: var(--accent); }
+  .arrow { height: 2px; background: var(--muted); position: relative; }
+  .arrow::after { content: ""; position: absolute; right: -1px; top: -5px; border: 6px solid transparent;
+    border-left: 9px solid var(--muted); border-right: 0; }
+  .calls { font-size: 17px; color: var(--muted); text-align: center; }
+  .calls b { color: var(--green); }
+</style>
+</head>
+<body>
+  <div>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 100 100" aria-hidden="true">
+        <polygon points="50,6 88,28 88,72 50,94 12,72 12,28" fill="none" stroke="#e535ab" stroke-width="6"/>
+        <circle cx="50" cy="6" r="8" fill="#e535ab"/><circle cx="88" cy="28" r="8" fill="#e535ab"/>
+        <circle cx="88" cy="72" r="8" fill="#e535ab"/><circle cx="50" cy="94" r="8" fill="#e535ab"/>
+        <circle cx="12" cy="72" r="8" fill="#e535ab"/><circle cx="12" cy="28" r="8" fill="#e535ab"/>
+        <path d="M30 50 H70 M58 38 L70 50 L58 62" fill="none" stroke="#58a6ff" stroke-width="7"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h1>gqlgw</h1>
+    </div>
+    <p class="tag">SDL-first <em>GraphQL gateway</em><br>running in nginx / OpenResty</p>
+    <div class="facts">
+      <div><b>@fetch</b> REST calls declared in the schema</div>
+      <div><b>No N+1</b>: rounds, deduplication, <b>@batch</b></div>
+      <div><b>C99</b> core via LuaJIT FFI · 3-level cache</div>
+    </div>
+  </div>
+  <div class="right">
+<pre><span class="k">type</span> <span class="t">Post</span> {
+  title: <span class="t">String!</span>
+  author: <span class="t">User</span>
+    <span class="d">@fetch</span>(source: <span class="s">"users"</span>,
+           path: <span class="s">"/users/{parent.authorId}"</span>)
+    <span class="d">@batch</span>(path: <span class="s">"/users?ids={keys}"</span>,
+           match: <span class="s">"id"</span>)
+}</pre>
+    <div class="flow">
+      <div class="box">client</div><div class="arrow"></div>
+      <div class="box gw">nginx + gqlgw</div><div class="arrow"></div>
+      <div class="box">REST</div>
+    </div>
+    <div class="calls">100 posts + authors: 101 calls → <b>2</b> batched → <b>1</b> cached</div>
+  </div>
+  <div class="url">github.com/abusi/gqlgw</div>
+</body>
+</html>

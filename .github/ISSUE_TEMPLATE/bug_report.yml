@@ -1,0 +1,49 @@
+name: Bug report
+description: Something does not work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! Security issues go through
+        [a private report](https://github.com/abusi/gqlgw/security/advisories/new), not here.
+  - type: input
+    id: version
+    attributes:
+      label: gqlgw version
+      description: The image tag, or the commit if you built it yourself.
+      placeholder: ghcr.io/abusi/gqlgw:0.2.0
+    validations:
+      required: true
+  - type: dropdown
+    id: setup
+    attributes:
+      label: Setup
+      options:
+        - Docker image
+        - make install on an existing OpenResty
+        - Hand-written nginx configuration (Lua API)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: |
+        The smallest schema, gqlgw.toml and query that show the problem, and what the services
+        answer. `[gateway] debug_headers = true` adds useful response headers.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and output
+      description: Error log lines, gqlc messages, the GraphQL response.
+      render: text

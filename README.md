@@ -82,7 +82,7 @@ Without Docker: `make && sudo make install`, then `gqlc compile`, `gqlc render`,
 | [Examples](https://abusi.github.io/gqlgw/examples/) | full server, locations only, batch vs no batch, auth forwarding, mutations, unions |
 | [Reference](https://abusi.github.io/gqlgw/reference/directives/) | SDL directives, `gqlgw.toml`, `gqlc`, generated nginx configuration, HTTP, metrics, Lua API |
 
-Design notes and milestones: [PLAN.md](PLAN.md). Measurements: [bench/RESULTS.md](bench/RESULTS.md).
+Measurements: [bench/RESULTS.md](bench/RESULTS.md).
 
 ## Development
 

@@ -55,7 +55,22 @@ flowchart LR
 | `make docker-test` | the runner (Docker) | the image end to end |
 | documentation | Python | `zensical build --strict` (broken links fail) |
 
-A new push to the pull request cancels the previous run.
+A new push to the pull request cancels the previous run. Runs from forks wait for a maintainer's
+approval, and `main` only accepts pull requests whose four checks passed.
+
+## Releasing
+
+```mermaid
+flowchart LR
+    v["bump _VERSION<br/>(lua/gqlgw/init.lua)<br/>+ CHANGELOG.md section"] --> pr["pull request, CI green, merge"]
+    pr --> tag["git tag vX.Y.Z<br/>git push origin vX.Y.Z"]
+    tag --> chk["release.yml: tag = _VERSION,<br/>changelog entry, make docker-test"]
+    chk --> img["ghcr.io/abusi/gqlgw:X.Y.Z, X.Y, latest<br/>amd64 + arm64, provenance attestation"]
+    img --> rel["GitHub release<br/>notes = the changelog section"]
+```
+
+The release workflow refuses a tag that does not match `_VERSION`, or a version without a
+`## [X.Y.Z]` section in `CHANGELOG.md`.
 
 ## Documentation
 
@@ -83,4 +98,3 @@ from `examples/` with `--8<-- "path"`, so they are tested by `make test-config`.
 | `bench/` | wrk benchmark |
 | `docker/`, `Dockerfile` | the image |
 | `docs/`, `zensical.toml` | this site |
-| `PLAN.md` | design notes and milestones |
