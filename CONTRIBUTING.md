@@ -1,6 +1,7 @@
 # Contributing to gqlgw
 
 Thanks for your interest! Bug reports, documentation fixes and pull requests are welcome.
+Everyone taking part in the project is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Before you start
 
