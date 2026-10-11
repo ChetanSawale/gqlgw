@@ -1,0 +1,5 @@
+# gateway
+# expect: String cannot represent a non string value: 1
+# expect: @fetch(path:) of Query.c: {parent.id}: Query has no field "id".
+# expect: Int cannot represent non-integer value: "x"
+type Query { a: Int @deprecated(reason: 1) b: T @fetch(source: "s", path: "/b") c: T @fetch(source: "s", path: "/t/{parent.id}") @batch(path: "/t?ids={keys}", match: "id", max: "x") } type T { id: ID }

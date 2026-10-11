@@ -1,0 +1,1 @@
+query A($a: Boolean, $b: Int, $c: String) { dog { name @include(if: $a) } }

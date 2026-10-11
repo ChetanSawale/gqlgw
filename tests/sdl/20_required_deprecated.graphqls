@@ -1,0 +1,1 @@
+type Query { a(x: Int! @deprecated): Int } input I { f: Int! @deprecated } type T { b(i: I): Int }

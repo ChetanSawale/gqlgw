@@ -1,0 +1,1 @@
+query { dog { name } } fragment Unused on Dog { name } fragment UsedByUnused on Dog { ...Unused }

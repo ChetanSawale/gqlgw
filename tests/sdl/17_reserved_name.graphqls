@@ -1,0 +1,1 @@
+type Query { __a: Int } type __T { a: Int }

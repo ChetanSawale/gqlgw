@@ -1,0 +1,1 @@
+query { pet { ...F } } fragment F on Pet { name ... on Dog { barkVolume } }

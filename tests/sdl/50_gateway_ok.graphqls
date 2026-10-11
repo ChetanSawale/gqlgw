@@ -1,0 +1,10 @@
+# gateway
+type Query {
+  user(id: ID!): User @fetch(source: "users", path: "/users/{args.id}")
+}
+type User @cache(ttl: 60) {
+  id: ID!
+  teamId: ID @from(key: "team_id")
+  team: Team @fetch(source: "teams", path: "/teams/{parent.teamId}") @batch(path: "/teams?ids={keys}", match: "id")
+}
+type Team { id: ID! }

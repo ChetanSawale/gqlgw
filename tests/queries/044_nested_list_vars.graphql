@@ -1,0 +1,1 @@
+query A($a: [String!], $b: [String]) { complicatedArgs { a: stringListNonNullArgField(stringListNonNullArg: $a) b: stringListNonNullArgField(stringListNonNullArg: $b) } }

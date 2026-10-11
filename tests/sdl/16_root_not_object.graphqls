@@ -1,0 +1,1 @@
+schema { query: In } input In { a: Int }

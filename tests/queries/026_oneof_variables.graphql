@@ -1,0 +1,1 @@
+query A($s: String, $t: String!) { complicatedArgs { a: oneOfArgField(oneOfArg: {stringField: $s}) b: oneOfArgField(oneOfArg: {stringField: $t}) } }

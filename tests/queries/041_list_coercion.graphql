@@ -1,0 +1,1 @@
+query A($s: String) { complicatedArgs { stringListArgField(stringListArg: "single") b: stringListArgField(stringListArg: $s) } }

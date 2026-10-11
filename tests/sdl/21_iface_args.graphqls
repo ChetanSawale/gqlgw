@@ -1,0 +1,1 @@
+type Query { a: I } interface I { f(x: Int): Int } type T implements I { f(x: String, y: Int!): Int }

@@ -1,0 +1,1 @@
+{ complicatedArgs { intArgField(intArg: "3") floatArgField(floatArg: true) stringArgField(stringArg: 1) booleanArgField(booleanArg: 1.0) idArgField(idArg: 1.5) enumArgField(enumArg: "BROWN") stringListArgField(stringListArg: [1, "a"]) complexArgField(complexArg: {intField: 4}) } }

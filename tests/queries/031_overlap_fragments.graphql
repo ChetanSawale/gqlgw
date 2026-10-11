@@ -1,0 +1,1 @@
+{ dog { ...A ...B } } fragment A on Dog { x: name } fragment B on Dog { x: barks }

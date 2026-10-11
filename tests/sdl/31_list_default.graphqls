@@ -1,0 +1,1 @@
+type Query { a(e: [Int!] = [1, null]): Int }

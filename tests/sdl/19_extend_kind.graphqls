@@ -1,0 +1,1 @@
+type Query { a: Int } extend input Query { b: Int }

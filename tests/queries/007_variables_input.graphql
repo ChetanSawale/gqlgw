@@ -1,0 +1,1 @@
+query Foo($a: Dog, $b: [[CatOrDog!]]!, $c: Pet) { dog { name } }

@@ -1,0 +1,1 @@
+type Query { a: U } union U = String

@@ -1,0 +1,1 @@
+{ dog { doesKnowCommand(dogCommand: SIT) doesKnowCommand(dogCommand: HEEL) isAtLocation(x: 1, y: 2) isAtLocation(y: 2, x: 1) } }

@@ -1,0 +1,40 @@
+worker_processes 2;
+error_log logs/error.log warn;
+pid logs/nginx.pid;
+env BACKEND_LATENCY;
+events { worker_connections 4096; }
+http {
+    access_log off;
+    lua_package_path "@ROOT@/lua/?.lua;@ROOT@/lua/?/init.lua;@ROOT@/bench/?.lua;;";
+    lua_shared_dict gqlgw_cache 64m;
+    init_by_lua_block {
+        require("gqlgw").init({
+            schema = "@ROOT@/build/bench/schema.gqlb",
+            lib = "@ROOT@/build/libgql.so",
+            cache = { shm = "gqlgw_cache", l2_ttl = 300 },
+            debug_headers = true,
+        })
+    }
+    upstream backend {
+        server 127.0.0.1:18081;
+        keepalive 256;
+    }
+    server {
+        listen 18080;
+        location = /graphql {
+            set $gqlgw_path "";
+            content_by_lua_block { require("gqlgw").serve() }
+        }
+        location /_src/ {
+            internal;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_set_header Accept-Encoding "";
+            proxy_pass http://backend$gqlgw_path;
+        }
+    }
+    server {
+        listen 18081;
+        location / { content_by_lua_block { require("mock").handle() } }
+    }
+}

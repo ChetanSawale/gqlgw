@@ -1,0 +1,1 @@
+{ dog { meowVolume ... on Cat { meowsVolume nope } } catOrDog { name } }

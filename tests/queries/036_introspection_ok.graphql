@@ -1,0 +1,1 @@
+{ __typename __schema { queryType { name } } __type(name: "Dog") { name kind fields(includeDeprecated: true) { name } } }

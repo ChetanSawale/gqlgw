@@ -1,0 +1,64 @@
+"Test schema: two REST services (users, posts) behind the gateway."
+type Query {
+  user(id: ID!): User @fetch(source: "users", path: "/users/{args.id}")
+  users(ids: [ID!]!): [User] @fetch(source: "users", path: "/users?ids={args.ids}")
+  posts(limit: Int = 20, tag: String, author: ID): [Post!]!
+    @fetch(source: "posts", path: "/posts?limit={args.limit}&tag={args.tag}&author={args.author}")
+  search(q: String!): [SearchResult!]! @fetch(source: "posts", path: "/search?q={args.q}", select: "results")
+  echo(path: String!): Echo @fetch(source: "echo", path: "/echo/{args.path}")
+  strictUser(id: ID!): User! @fetch(source: "users", path: "/users/{args.id}")
+  me: Echo @fetch(source: "echo", path: "/echo/me") @cache(ttl: 30, scope: "PRIVATE")
+  hello: String
+}
+
+type Mutation {
+  renameUser(id: ID!, name: String!): User
+    @fetch(source: "users", method: "PATCH", path: "/users/{args.id}", body: "{\"name\": {args.name}}")
+  createPost(input: PostInput!): Post @fetch(source: "posts", method: "POST", path: "/posts", body: "{args.input}")
+  echoPost(path: String!, input: PostInput): Echo
+    @fetch(source: "echo", method: "POST", path: "/echo/{args.path}", body: "{args}")
+}
+
+interface Node {
+  id: ID!
+}
+
+type User implements Node @cache(ttl: 60) {
+  id: ID!
+  name: String!
+  email: String @deprecated(reason: "privacy")
+  createdAt: String @from(key: "created_at")
+  posts(limit: Int = 3): [Post!]! @fetch(source: "posts", path: "/posts?author={parent.id}&limit={args.limit}")
+}
+
+type Post implements Node {
+  id: ID!
+  title: String!
+  body: String
+  tags: [String!]!
+  authorId: ID! @from(key: "author_id")
+  author: User
+    @fetch(source: "users", path: "/users/{parent.authorId}")
+    @batch(path: "/users?ids={keys}", match: "id", max: 50)
+  strictAuthor: User!
+    @fetch(source: "users", path: "/users/{parent.authorId}")
+    @batch(path: "/users?ids={keys}", match: "id", max: 50)
+  unbatchedAuthor: User @fetch(source: "users", path: "/users/{parent.authorId}")
+}
+
+type Echo {
+  method: String
+  uri: String
+  body: String
+  accept_encoding: String
+  authorization: String
+  content_length: String
+}
+
+union SearchResult @discriminator(key: "kind") = User | Post
+
+input PostInput {
+  title: String!
+  body: String
+  tags: [String!] = []
+}

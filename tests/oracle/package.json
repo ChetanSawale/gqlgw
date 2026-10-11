@@ -1,0 +1,9 @@
+{
+  "name": "gqlgw-oracle",
+  "private": true,
+  "description": "graphql-js as a reference oracle for gqlgw tests (dev only)",
+  "type": "module",
+  "dependencies": {
+    "graphql": "17.0.2"
+  }
+}

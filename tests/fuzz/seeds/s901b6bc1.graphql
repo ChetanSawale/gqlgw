@@ -1,0 +1,1 @@
+query Q($a: Int = 1, $b: ComplexInput) { complicatedArgs { intArgField(intArg: $a) complexArgField(complexArg: $b) } }

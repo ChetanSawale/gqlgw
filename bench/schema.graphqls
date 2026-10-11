@@ -1,0 +1,26 @@
+# Benchmark schema: 100 posts written by 100 distinct authors.
+type Query {
+  posts(limit: Int = 100): [Post!]! @fetch(source: "posts", path: "/posts?limit={args.limit}")
+}
+
+type Post {
+  id: ID!
+  title: String!
+  authorId: ID! @from(key: "author_id")
+  "naive: one request per distinct author (N+1, deduplicated)"
+  naiveAuthor: User @fetch(source: "users", path: "/users/{parent.authorId}")
+  "batched: the authors of a round in one request"
+  author: User
+    @fetch(source: "users", path: "/users/{parent.authorId}")
+    @batch(path: "/users?ids={keys}", match: "id", max: 100)
+  "batched and cached (shm)"
+  cachedAuthor: User
+    @fetch(source: "users", path: "/users/{parent.authorId}")
+    @batch(path: "/users?ids={keys}", match: "id", max: 100)
+    @cache(ttl: 300)
+}
+
+type User {
+  id: ID!
+  name: String!
+}

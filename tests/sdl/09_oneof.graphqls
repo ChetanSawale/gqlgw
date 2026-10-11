@@ -1,0 +1,1 @@
+type Query { a(x: O): Int } input O @oneOf { a: Int! b: String = "x" }

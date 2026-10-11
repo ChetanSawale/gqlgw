@@ -1,0 +1,1 @@
+mutation M($n: String!) { setName(name: $n) { name } }

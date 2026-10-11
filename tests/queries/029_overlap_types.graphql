@@ -1,0 +1,1 @@
+{ pet { ... on Dog { x: barkVolume } ... on Cat { x: meows } } }

@@ -1,0 +1,1 @@
+query A($i: Int = 1) { complicatedArgs { nonNullIntArgField(nonNullIntArg: $i) } }

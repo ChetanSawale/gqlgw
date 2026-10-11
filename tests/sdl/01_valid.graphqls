@@ -1,0 +1,9 @@
+type Query { a: Int b(x: [String!]! = ["a"], y: In = {f: 1}): String }
+input In { f: Int! = 2 g: [In] }
+interface Node { id: ID! }
+interface Named implements Node { id: ID! name: String }
+type User implements Node & Named { id: ID! name: String friends(first: Int = 10): [User!] }
+union U = User
+enum E { A B @deprecated(reason: "no") }
+scalar Date @specifiedBy(url: "https://example.com")
+directive @tag(name: String!) repeatable on FIELD_DEFINITION | OBJECT

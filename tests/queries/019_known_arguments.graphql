@@ -1,0 +1,1 @@
+{ dog { doesKnowCommand(dogCommand: SIT, extra: 1) name(surname: true, surname: false) } }

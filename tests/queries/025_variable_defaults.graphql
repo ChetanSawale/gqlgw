@@ -1,0 +1,1 @@
+query A($i: Int = "x", $b: Boolean! = true, $c: ComplexInput = {requiredField: 1}) { dog { name @include(if: $b) } complicatedArgs { intArgField(intArg: $i) complexArgField(complexArg: $c) } }

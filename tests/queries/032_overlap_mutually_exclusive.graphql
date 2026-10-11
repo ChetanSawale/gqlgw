@@ -1,0 +1,1 @@
+{ pet { ... on Dog { name } ... on Cat { name: nickname } } }

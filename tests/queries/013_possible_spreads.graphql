@@ -1,0 +1,1 @@
+{ dog { ... on Cat { meows } ...CatFields } } fragment CatFields on Cat { meows }

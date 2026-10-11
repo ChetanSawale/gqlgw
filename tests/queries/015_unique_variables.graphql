@@ -1,0 +1,1 @@
+query A($x: Int, $x: String, $y: Int, $y: Int) { dog { name } }

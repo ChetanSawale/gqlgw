@@ -1,0 +1,1 @@
+type Query { a: T } interface A { x: Int } interface B implements A { x: Int } type T implements B { x: Int }

@@ -1,0 +1,1 @@
+{ complicatedArgs { a: oneOfArgField(oneOfArg: {stringField: "a", intField: 1}) b: oneOfArgField(oneOfArg: {stringField: null}) c: oneOfArgField(oneOfArg: {}) } }

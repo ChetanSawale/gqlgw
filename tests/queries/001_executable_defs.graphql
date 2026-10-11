@@ -1,0 +1,1 @@
+{ dog { name } } type Cow { name: String } extend type Dog { color: String }

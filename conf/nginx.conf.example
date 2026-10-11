@@ -1,0 +1,98 @@
+# gqlgw: example OpenResty configuration.
+#
+#   gqlc compile -o /etc/gqlgw/schema.gqlb schema.graphqls   # also writes schema.routes.lua
+#   openresty -c /etc/gqlgw/nginx.conf
+
+worker_processes auto;
+error_log logs/error.log warn;
+
+events {
+    worker_connections 4096;
+}
+
+http {
+    lua_package_path "/opt/gqlgw/lua/?.lua;/opt/gqlgw/lua/?/init.lua;;";
+
+    # L2 cache (per node). Optional but recommended.
+    lua_shared_dict gqlgw_cache 128m;
+
+    init_by_lua_block {
+        require("gqlgw").init({
+            schema = "/etc/gqlgw/schema.gqlb",          -- routes: /etc/gqlgw/schema.routes.lua
+            lib = "/opt/gqlgw/lib/libgql.so",
+            cache = {
+                shm = "gqlgw_cache",
+                l2_ttl = 5,                             -- seconds, cap for shm entries
+                memcached = { host = "127.0.0.1", port = 11211, timeout = 50, pool_size = 64 },
+                private_header = "Authorization",       -- identity of @cache(scope: "PRIVATE")
+            },
+            introspection = true,
+            max_query_bytes = 65536,
+            max_depth = 32,
+            max_fetches = 1000,                         -- upstream requests per GraphQL request
+            max_rounds = 16,                            -- depth of fetch chains
+            strict_path_args = true,                    -- reject "/", "." and ".." in path segments
+            debug_headers = false,                      -- X-GQL-Rounds, X-GQL-Subrequests, X-GQL-Cache
+        })
+    }
+
+    upstream users_svc {
+        server 10.0.0.10:8080;
+        keepalive 64;
+    }
+    upstream posts_svc {
+        server 10.0.0.20:8080;
+        keepalive 64;
+    }
+
+    log_format gql '$remote_addr "$request" $status $request_time '
+                   'rounds=$gql_rounds sub=$gql_subrequests cache=$gql_cache';
+
+    server {
+        listen 8080;
+
+        location = /graphql {
+            set $gqlgw_path "";          # declares the variable used by the /_src/ locations
+            set $gql_rounds "-";
+            set $gql_subrequests "-";
+            set $gql_cache "-";
+            client_max_body_size 1m;
+            client_body_buffer_size 1m;  # keep request bodies in memory
+            access_log logs/graphql.log gql;
+            content_by_lua_block { require("gqlgw").serve() }
+            log_by_lua_block { require("gqlgw").log() }
+        }
+
+        # One internal location per @fetch(source: "...").
+        # The upstream path rendered from the SDL templates arrives in $gqlgw_path,
+        # already URI-escaped: nginx sends it verbatim.
+        location /_src/users/ {
+            internal;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_set_header Accept-Encoding "";      # subrequests inherit client headers
+            proxy_set_header Host users.internal;
+            proxy_connect_timeout 1s;
+            proxy_read_timeout 3s;
+            proxy_pass http://users_svc/api/v1$gqlgw_path;
+        }
+
+        location /_src/posts/ {
+            internal;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_set_header Accept-Encoding "";
+            proxy_set_header Host posts.internal;
+            proxy_connect_timeout 1s;
+            proxy_read_timeout 3s;
+            proxy_pass http://posts_svc$gqlgw_path;
+        }
+
+        # Cache purge (one source): curl -X POST 'http://127.0.0.1:8080/_gqlgw/purge?source=users'
+        location = /_gqlgw/purge {
+            allow 127.0.0.1;
+            deny all;
+            content_by_lua_block { require("gqlgw").purge() }
+        }
+    }
+}

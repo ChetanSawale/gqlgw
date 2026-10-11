@@ -1,0 +1,30 @@
+# gateway
+# expect: @fetch(path:) of Query.a: unknown argument "nope".
+# expect: @fetch(source:) must match [A-Za-z0-9_-]+.
+# expect: @batch on Query.c requires the @fetch path to reference exactly one {parent.*} key.
+# expect: @fetch(path:) of T.d: {parent.x}: T has no field "x".
+# expect: @fetch(path:) of T.e: {parent.t} must reference a scalar or enum field.
+# expect: @fetch(body:) is not allowed with method GET.
+# expect: @fetch must be declared on object type fields (I.g is an interface field).
+# expect: @cache(scope:) must be "PUBLIC" or "PRIVATE".
+# expect: @fetch(path:) must start with '/'.
+# expect: @batch(path:) must contain {keys} exactly once and no {parent.*}.
+# expect: Unknown argument "foo" on directive "@fetch".
+type Query {
+  a(id: ID): T @fetch(source: "s", path: "/x/{args.nope}")
+  b: T @fetch(source: "s s", path: "/x")
+  c: T @fetch(source: "s", path: "/x") @batch(path: "/x?ids={keys}", match: "id")
+  h: Int @fetch(source: "s", path: "/x", body: "{}")
+  i: T @fetch(source: "s", path: "/x") @cache(ttl: 1, scope: "SHARED")
+  j: T @fetch(source: "s", path: "x")
+  k: T @fetch(source: "s", path: "/x", foo: 1)
+}
+interface I { g: Int @fetch(source: "s", path: "/g") }
+type T implements I {
+  id: ID
+  t: T
+  g: Int
+  d: Int @fetch(source: "s", path: "/d/{parent.x}")
+  e: Int @fetch(source: "s", path: "/e/{parent.t}")
+  f: T @fetch(source: "s", path: "/f/{parent.id}") @batch(path: "/f?ids={parent.id}", match: "id")
+}

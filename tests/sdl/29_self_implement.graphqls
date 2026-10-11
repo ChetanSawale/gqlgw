@@ -1,0 +1,1 @@
+type Query { a: I } interface I implements I { x: Int }
