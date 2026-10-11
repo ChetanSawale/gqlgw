@@ -1,0 +1,2 @@
+# Documentation toolchain (zensical.toml, docs/). Pinned: Zensical is still 0.0.x.
+zensical==0.0.69

@@ -88,3 +88,14 @@ POST /graphql
 Content-Type: application/json
 --- response_body chomp
 {"data":{"a":{"uri":"/__mock/echo/x%2Fy"}}}
+
+
+
+=== TEST 8: {parent.*} in a body template reads the parent object
+--- request
+POST /graphql
+{"query": "{ posts(limit: 2) { id echoParent { method uri body } } }"}
+--- more_headers
+Content-Type: application/json
+--- response_body chomp
+{"data":{"posts":[{"id":"1","echoParent":{"method":"POST","uri":"/__mock/echo/parent","body":"{\"post\": \"1\", \"author\": \"2\"}"}},{"id":"2","echoParent":{"method":"POST","uri":"/__mock/echo/parent","body":"{\"post\": \"2\", \"author\": \"3\"}"}}]}}

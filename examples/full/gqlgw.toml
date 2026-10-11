@@ -1,0 +1,47 @@
+# Default mode: `gqlc render` writes one file, gqlgw.conf, with its own server {}.
+#
+#   gqlc compile -c gqlgw.toml ../docker/schema.graphqls     # -> schema.gqlb, schema.routes.lua
+#   gqlc render  -c gqlgw.toml -o /etc/nginx/gqlgw           # -> gqlgw.conf, gqlgw.lua
+#   # nginx.conf, inside http { }:  include /etc/nginx/gqlgw/gqlgw.conf;
+
+[gateway]
+listen = "0.0.0.0:8080 reuseport"
+server_name = "api.example.com"
+path = "/graphql"
+access_log = "logs/gqlgw.access.log"      # format "gqlgw": rounds, subrequests, cache hits
+introspection = true
+max_body = "256k"
+
+[limits]
+depth = 20
+rounds = 8
+response_bytes = "4m"
+
+[cache]
+shm_size = "128m"                         # L2, shared by the workers of this node
+l2_ttl = 5
+
+[cache.memcached]                         # L3, shared by every node
+host = "${MEMCACHED_HOST:-127.0.0.1}"
+port = 11211
+timeout = 50                              # ms
+
+[nginx]
+resolver = "auto"                         # nameservers of /etc/resolv.conf, read by gqlc render
+
+[metrics]
+port = 8191
+path = "/gqlgw_metrics"
+allow = ["127.0.0.1", "10.0.0.0/8"]
+exclude_operations = ["^IntrospectionQuery$"]
+
+[purge]
+path = "/gqlgw_purge"
+
+[sources.users]
+url = "${USERS_URL:-http://users.internal:8080/api/v1}"
+read_timeout = "2s"
+
+[sources.posts]
+url = "${POSTS_URL:-https://posts.internal}"
+forward_headers = ["Authorization", "Accept-Language"]

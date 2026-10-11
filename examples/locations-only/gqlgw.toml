@@ -1,0 +1,24 @@
+# Locations-only mode: the gateway is served by an existing server {} (its TLS,
+# its domain, its other locations). `gqlc render --locations-only` writes:
+#   gqlgw.http.conf       to include inside http { }
+#   gqlgw.locations.conf  to include inside your server { }
+#
+# render: --locations-only
+#   gqlc compile -c gqlgw.toml ../docker/schema.graphqls
+#   gqlc render  -c gqlgw.toml -o /etc/nginx/gqlgw --locations-only
+
+[gateway]
+path = "/api/graphql"
+introspection = false
+
+[cache]
+shm_size = "32m"
+
+[metrics]
+port = 8191                               # the admin server {} stays in gqlgw.http.conf
+
+[sources.users]
+url = "http://127.0.0.1:9001"
+
+[sources.posts]
+url = "http://127.0.0.1:9002"

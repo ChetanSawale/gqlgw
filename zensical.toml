@@ -1,0 +1,122 @@
+# Documentation site (https://abusi.github.io/gqlgw/), built with Zensical:
+#   pip install -r requirements-docs.txt
+#   zensical serve          # http://localhost:8000
+#   zensical build --strict # site/
+[project]
+site_name = "gqlgw"
+site_url = "https://abusi.github.io/gqlgw/"
+site_description = "SDL-first GraphQL gateway for OpenResty: an annotated schema, a C99 core loaded through FFI, batching and a three-level resource cache."
+site_author = "Aurélien Busi"
+copyright = "Copyright &copy; 2026 Aurélien Busi, BSD-2-Clause"
+repo_url = "https://github.com/abusi/gqlgw"
+repo_name = "abusi/gqlgw"
+edit_uri = "edit/main/docs/"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Getting started" = "getting-started.md" },
+  { "How it works" = [
+    "how-it-works/index.md",
+    { "Build and deploy pipeline" = "how-it-works/pipeline.md" },
+    { "Life of a request" = "how-it-works/request.md" },
+    { "Rounds and batching" = "how-it-works/batching.md" },
+    { "Resource cache" = "how-it-works/caching.md" },
+  ] },
+  { "Examples" = [
+    "examples/index.md",
+    { "Full server" = "examples/full.md" },
+    { "Locations only" = "examples/locations-only.md" },
+    { "Batch vs no batch" = "examples/batching.md" },
+    { "Auth context forwarding" = "examples/auth.md" },
+    { "Mutations" = "examples/mutations.md" },
+    { "Unions and interfaces" = "examples/abstract-types.md" },
+  ] },
+  { "Reference" = [
+    { "SDL directives" = "reference/directives.md" },
+    { "gqlgw.toml" = "reference/configuration.md" },
+    { "gqlc" = "reference/gqlc.md" },
+    { "Generated nginx configuration" = "reference/nginx.md" },
+    { "GraphQL over HTTP" = "reference/http.md" },
+    { "Metrics" = "reference/metrics.md" },
+    { "Lua API" = "reference/lua-api.md" },
+  ] },
+  { "Operations" = [
+    { "Docker image" = "operations/docker.md" },
+    { "Existing nginx / OpenResty" = "operations/install.md" },
+  ] },
+  { "Project" = [
+    { "Development" = "project/development.md" },
+    { "Conformance and limits" = "project/conformance.md" },
+    { "Benchmarks" = "project/benchmarks.md" },
+  ] },
+]
+
+[project.theme]
+language = "en"
+features = [
+  "content.action.edit",
+  "content.code.annotate",
+  "content.code.copy",
+  "content.tabs.link",
+  "content.tooltips",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+  "toc.follow",
+]
+
+[project.theme.icon]
+logo = "lucide/waypoints"
+repo = "fontawesome/brands/github"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[project.markdown_extensions]
+abbr = {}
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
+tables = {}
+toc.permalink = true
+pymdownx.betterem = {}
+pymdownx.details = {}
+pymdownx.emoji.emoji_generator = "zensical.extensions.emoji.to_svg"
+pymdownx.emoji.emoji_index = "zensical.extensions.emoji.twemoji"
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.inlinehilite = {}
+pymdownx.keys = {}
+pymdownx.mark = {}
+pymdownx.smartsymbols = {}
+# examples are real files of the repository, checked by `make test-config`
+pymdownx.snippets.base_path = ["."]
+pymdownx.snippets.check_paths = true
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+pymdownx.tabbed.alternate_style = true
+pymdownx.tabbed.combine_header_slug = true
+pymdownx.tasklist.custom_checkbox = true

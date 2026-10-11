@@ -11,7 +11,10 @@ start)
     if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
         exit 0
     fi
-    memcached -d -l 127.0.0.1 -p "$port" -U 0 -m 32 -P "$pidfile"
+    # memcached refuses to run as root unless told so (CI containers)
+    user=""
+    [ "$(id -u)" = 0 ] && user="-u root"
+    memcached -d $user -l 127.0.0.1 -p "$port" -U 0 -m 32 -P "$pidfile"
     sleep 0.2
     echo "memcached listening on 127.0.0.1:$port"
     ;;

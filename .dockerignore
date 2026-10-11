@@ -6,3 +6,5 @@ t/config/run*
 tests/oracle/node_modules
 *.gqlb
 crash-*
+site
+.venv

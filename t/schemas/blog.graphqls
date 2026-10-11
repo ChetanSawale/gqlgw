@@ -44,6 +44,9 @@ type Post implements Node {
     @fetch(source: "users", path: "/users/{parent.authorId}")
     @batch(path: "/users?ids={keys}", match: "id", max: 50)
   unbatchedAuthor: User @fetch(source: "users", path: "/users/{parent.authorId}")
+  "a POST whose body reads the parent object"
+  echoParent: Echo
+    @fetch(source: "echo", method: "POST", path: "/echo/parent", body: "{\"post\": {parent.id}, \"author\": {parent.authorId}}")
 }
 
 type Echo {

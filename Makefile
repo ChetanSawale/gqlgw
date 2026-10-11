@@ -28,7 +28,7 @@ HDRS     = $(wildcard src/*.h)
 
 SAN      = -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer
 
-.PHONY: all lib install uninstall image docker-test clean test test-c test-t t-config test-config test-oracle test-toml fuzz deps schemas memcached-start memcached-stop bench
+.PHONY: all lib install uninstall image docker-test clean test test-c test-t t-config test-config test-oracle test-toml fuzz deps schemas memcached-start memcached-stop dns-start dns-stop bench
 
 all: $(B)/libgql.so $(B)/gqlc
 
@@ -77,7 +77,7 @@ docker-test:
 # ---- tests -----------------------------------------------------------------
 
 # C unit tests, built with sanitizers
-$(B)/test_c: tests/c/*.c tests/c/*.h $(LIB_SRC) $(GQLC_SRC) $(HDRS)
+$(B)/test_c: tests/c/*.c tests/c/*.h $(LIB_SRC) $(GQLC_SRC) $(HDRS) src/prelude.inc
 	@mkdir -p $(B)
 	$(CC) -std=gnu99 $(WARN) $(SAN) -Isrc -o $@ tests/c/*.c $(LIB_SRC) $(GQLC_SRC) -lm
 
@@ -105,14 +105,14 @@ schemas: $(T_SCHEMAS)
 
 # configurations rendered by gqlc for t/006-config.t and t/007-server.t
 T_ENV = TEST_NGINX_SERVER_PORT=1984 GQLGW_TEST_ROOT=$(ROOT) GQLGW_TEST_TLS_PORT=19843 \
-        GQLGW_TEST_ADMIN_PORT=19844 GQLGW_TEST_PORT=19845
+        GQLGW_TEST_ADMIN_PORT=19844 GQLGW_TEST_PORT=19845 GQLGW_TEST_RESOLVER=127.0.0.1:21253
 
 t-config: all schemas
 	./scripts/test-certs.sh t/config/run/tls
 	$(T_ENV) $(B)/gqlc render -q -c t/config/gqlgw.toml -o t/config/run --locations-only
 	$(T_ENV) $(B)/gqlc render -q -c t/config/server.toml -o t/config/run-server
 
-test-t: all schemas t-config memcached-start
+test-t: all schemas t-config memcached-start dns-start
 	PATH=$(OPENRESTY)/nginx/sbin:$(OPENRESTY)/bin:$$PATH \
 	PERL5LIB=$(DEPS)/perl/lib/perl5 \
 	TEST_NGINX_ROOT=$(ROOT) TEST_NGINX_MEMCACHED_PORT=21211 TEST_NGINX_SERVER_PORT=1984 \
@@ -128,7 +128,7 @@ test: test-c test-toml test-config test-oracle test-t
 # ---- fuzzing (clang + libFuzzer) ---------------------------------------------
 
 FUZZ_TIME ?= 60
-$(B)/fuzz_%: tests/fuzz/fuzz_%.c $(LIB_SRC) $(GQLC_SRC) $(HDRS)
+$(B)/fuzz_%: tests/fuzz/fuzz_%.c $(LIB_SRC) $(GQLC_SRC) $(HDRS) src/prelude.inc
 	@mkdir -p $(B)
 	clang -std=gnu99 -g -O1 -fsanitize=fuzzer,address,undefined -Isrc -o $@ $< $(LIB_SRC) $(GQLC_SRC) -lm
 
@@ -158,6 +158,13 @@ memcached-start:
 
 memcached-stop:
 	@./scripts/memcached.sh stop 21211
+
+# answers "localhost" for the nginx resolver of t/006-config.t (no /etc/hosts there)
+dns-start:
+	@python3 -I scripts/dns.py start 21253
+
+dns-stop:
+	@python3 -I scripts/dns.py stop 21253
 
 bench: all
 	./bench/run.sh

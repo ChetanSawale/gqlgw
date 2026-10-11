@@ -116,8 +116,9 @@ local function render_path(tpl, args, parent, keys, strict)
 end
 _M.render_path = render_path
 
--- args_json: the coerced arguments as produced by libgql (ordered keys)
-local function render_body(tpl, args, args_json)
+-- args_json: the coerced arguments as produced by libgql (ordered keys);
+-- parent: the raw JSON object of the parent ({parent.x} parts hold its raw key)
+local function render_body(tpl, args, args_json, parent)
     local out = {}
     for j = 1, #tpl do
         local p = tpl[j]
@@ -126,7 +127,12 @@ local function render_body(tpl, args, args_json)
         elseif #p == 1 then
             out[j] = args_json or encode_json.encode(args) or "{}"
         else
-            local v = dig(args, p, 2)
+            local v
+            if p[1] == "parent" then
+                v = parent and parent[p[2]]
+            else
+                v = dig(args, p, 2)
+            end
             out[j] = (v == nil) and "null" or (encode_json.encode(v) or "null")
         end
     end
@@ -297,7 +303,7 @@ function _M.dispatch(ctx, items)
                     uri = prefix .. fetch.source .. "/",
                     path = path,
                     method = fetch.method,
-                    body = fetch.body and render_body(fetch.body, args, ctx:field_args_json(item.i)) or nil,
+                    body = fetch.body and render_body(fetch.body, args, ctx:field_args_json(item.i), parent) or nil,
                     ckey = ckey, route = route, items = {},
                 }
                 if ckey then

@@ -1,0 +1,96 @@
+# Tests, on pull requests only (nothing runs on branch pushes before a PR is opened).
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: make test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # the base image of the gqlgw image: same OpenResty, same glibc
+    container: openresty/openresty:1.31.1.1-resolute
+    steps:
+      - name: System packages
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends build-essential cpanminus memcached \
+            nodejs npm python3 openssl ca-certificates curl git
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
+        with:
+          path: |
+            .deps/perl
+            .deps/src
+            .deps/toml-test
+            tests/oracle/node_modules
+          key: test-deps-${{ hashFiles('scripts/deps.sh', 'tests/oracle/package-lock.json') }}
+      - name: Test dependencies (OpenResty from the image)
+        run: |
+          mkdir -p .deps
+          ln -sfn /usr/local/openresty .deps/openresty
+          make deps
+      - name: Build
+        run: make -j"$(nproc)" all
+      - name: C unit tests (ASan/UBSan)
+        run: make test-c
+      - name: toml-test corpus
+        run: make test-toml
+      - name: gqlgw.toml cases, golden renderings and examples
+        run: make test-config
+      - name: graphql-js oracle
+        run: make test-oracle
+      - name: Test::Nginx
+        run: make test-t
+
+  fuzz:
+    name: fuzzing (regressions + 30 s per target)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container: openresty/openresty:1.31.1.1-resolute
+    steps:
+      - name: System packages
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends build-essential clang llvm libclang-rt-dev git ca-certificates
+      - uses: actions/checkout@v7
+      - name: libFuzzer + ASan/UBSan
+        run: make fuzz FUZZ_TIME=30
+      - name: Crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuzz-artifacts
+          path: build/fuzz_artifacts/
+          if-no-files-found: ignore
+
+  docker:
+    name: make docker-test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Image + example gateways + memcached + mock backend
+        run: make docker-test
+
+  docs:
+    name: documentation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements-docs.txt
+      - name: zensical build --strict
+        run: zensical build --clean --strict

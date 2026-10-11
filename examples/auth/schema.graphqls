@@ -1,0 +1,32 @@
+"""
+Example schema: the caller's identity travels from the client to the backends.
+The services check the Authorization header themselves; the gateway only
+forwards it (gqlgw.toml) and keeps per-user responses apart in the cache.
+"""
+type Query {
+  "The caller, as seen by the users service (GET /me with the client's token)."
+  me: User @fetch(source: "users", path: "/me") @cache(ttl: 30, scope: "PRIVATE")
+
+  "Any user: the same response for every caller, so a shared cache entry."
+  user(id: ID!): User @fetch(source: "users", path: "/users/{args.id}")
+}
+
+type User @cache(ttl: 300) {
+  id: ID!
+  name: String!
+  "Orders are private: one cache entry per Authorization value."
+  orders: [Order!]!
+    @fetch(source: "orders", path: "/users/{parent.id}/orders")
+    @cache(ttl: 10, scope: "PRIVATE")
+}
+
+type Order {
+  id: ID!
+  total: Float!
+  items: [Product!]! @fetch(source: "catalog", path: "/orders/{parent.id}/products")
+}
+
+type Product @cache(ttl: 600) {
+  id: ID!
+  name: String!
+}

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Installe les dépendances hors apt dans .deps/ (sans sudo) :
-#   - OpenResty (compilé depuis les sources)
+# Installs the dependencies that do not come from apt into .deps/ (no sudo):
+#   - OpenResty (built from the sources; skipped when .deps/openresty already
+#     holds one, e.g. a symlink to the OpenResty of the CI image)
 #   - Test::Nginx (cpanm --local-lib)
-#   - graphql-js (oracle de test, npm)
-#   - corpus toml-test (fichiers uniquement, pas besoin de Go)
+#   - graphql-js (test oracle, npm)
+#   - toml-test corpus (files only, Go is not needed)
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 DEPS="$ROOT/.deps"

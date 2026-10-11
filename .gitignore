@@ -12,3 +12,5 @@ timeout-*
 src/prelude.inc
 t/config/run/
 t/config/run-server/
+site/
+.venv/

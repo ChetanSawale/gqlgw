@@ -106,7 +106,7 @@ POST /graphql
 --- more_headers
 Content-Type: application/json
 --- response_body chomp
-{"data":{"__schema":{"queryType":{"name":"Query"},"mutationType":{"name":"Mutation"}},"__type":{"fields":[{"name":"id"},{"name":"title"},{"name":"body"},{"name":"tags"},{"name":"authorId"},{"name":"author"},{"name":"strictAuthor"},{"name":"unbatchedAuthor"}]}}}
+{"data":{"__schema":{"queryType":{"name":"Query"},"mutationType":{"name":"Mutation"}},"__type":{"fields":[{"name":"id"},{"name":"title"},{"name":"body"},{"name":"tags"},{"name":"authorId"},{"name":"author"},{"name":"strictAuthor"},{"name":"unbatchedAuthor"},{"name":"echoParent"}]}}}
 
 
 

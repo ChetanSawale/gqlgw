@@ -1,0 +1,27 @@
+# Forwarding the caller's context (identity, language, trace id) to the backends.
+#
+#   gqlc compile -c gqlgw.toml schema.graphqls
+#   gqlc render  -c gqlgw.toml -o /etc/nginx/gqlgw
+
+[cache]
+# @cache(scope: "PRIVATE") adds a hash of this header to the cache key
+private_header = "Authorization"
+
+# Allowlist: only these client headers reach the users service.
+[sources.users]
+url = "${USERS_URL:-http://users.internal:8080}"
+forward_headers = ["Authorization", "Accept-Language", "X-Request-Id"]
+
+# The orders service authenticates the gateway too: a service key from the
+# environment, added to every request (the client cannot send or override it).
+[sources.orders]
+url = "${ORDERS_URL:-https://orders.internal}"
+forward_headers = ["Authorization", "X-Request-Id"]
+set_headers = { X-Api-Key = "${ORDERS_API_KEY:?set ORDERS_API_KEY to the orders service key}" }
+# sources.d/orders/*.conf adds what gqlgw.toml cannot express (see that directory)
+
+# Denylist: every client header except these (a legacy service that reads
+# custom headers set by the clients).
+[sources.catalog]
+url = "${CATALOG_URL:-http://catalog.internal}"
+drop_headers = ["Cookie", "Authorization"]
