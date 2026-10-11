@@ -1,0 +1,5 @@
+# expect: [gateway] listen: invalid value "8080; include /etc/passwd" (no quotes, tabs or ;{}$#).
+# expect: [gateway] server_name: invalid value "a"b" (no quotes, tabs or ;{}$#).
+[gateway]
+listen = "8080; include /etc/passwd"
+server_name = 'a"b'

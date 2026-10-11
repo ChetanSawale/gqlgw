@@ -1,0 +1,7 @@
+# expect: Environment variable USERS_URL is not set (use ${USERS_URL:-default} to give a default value).
+# expect: API_KEY: set the API key of the users service
+# expect: Invalid environment variable reference "${1X}"
+[sources.users]
+url = "${USERS_URL}"
+set_headers = { X-Api-Key = "${API_KEY:?set the API key of the users service}" }
+read_timeout = "${1X}"

@@ -1,0 +1,22 @@
+# render: --locations-only
+# Minimal configuration, locations to include in an existing server {}.
+[gateway]
+schema = "../../../t/schemas/gw.gqlb"
+lib = "${GQLGW_TEST_ROOT}/build/libgql.so"
+
+[metrics]
+enabled = false
+
+[purge]
+enabled = false
+
+[sources.users]
+url = "http://127.0.0.1:8001"
+[sources.posts]
+url = "http://127.0.0.1:8002"
+[sources.echo]
+url = "http://127.0.0.1:8003"
+[sources.secure]
+url = "https://127.0.0.1:8004"
+[sources.badtls]
+url = "https://127.0.0.1:8005"

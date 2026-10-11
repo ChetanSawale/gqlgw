@@ -1,0 +1,14 @@
+# expect: types.toml:10:9: [limits] depth must be an integer between 1 and 1000.
+# expect: types.toml:11:10: [limits] rounds must be an integer between 1 and 1000.
+# expect: types.toml:7:17: [gateway] introspection must be a boolean, not integer.
+# expect: types.toml:14:10: [cache] l1_ttl must be a number between 0 and 86400.
+# expect: types.toml:8:12: [gateway] max_body: invalid size "1 mb" (bytes, or a number followed by k, m or g).
+[gateway]
+introspection = 1
+max_body = "1 mb"
+[limits]
+depth = "deep"
+rounds = 0
+
+[cache]
+l1_ttl = -1

@@ -1,0 +1,62 @@
+# Every section, default mode (own server {}).
+[gateway]
+listen = "0.0.0.0:8080 reuseport"
+server_name = "api.example.com api.internal"
+path = "/api/graphql"
+schema = "../../../t/schemas/gw.gqlb"
+lib = "${GQLGW_TEST_ROOT}/build/libgql.so"
+access_log = "/dev/stdout"
+introspection = false
+max_body = "256k"
+
+[limits]
+depth = 20
+response_bytes = "4m"
+
+[cache]
+shm_size = "32m"
+l1_ttl = 0.5
+private_header = "X-User-Token"
+
+[cache.memcached]
+host = "memcached"
+port = 11211
+timeout = 50
+
+[nginx]
+resolver = "auto"
+resolver_valid = "30s"
+resolver_ipv6 = false
+
+[metrics]
+port = 9145
+allow = ["10.0.0.0/8", "fd00::/8"]
+exclude_operations = ["^IntrospectionQuery$", "^health"]
+buckets = [0.01, 0.1, 1]
+
+[purge]
+path = "/admin/purge"
+
+[sources.users]
+url = "http://users.svc:8080/api/v1/"
+read_timeout = "2s"
+keepalive = 32
+
+[sources.posts]
+url = "https://posts.example.com"
+drop_headers = ["cookie"]
+set_headers = { X-Api-Key = "abc$def", Accept = "application/vnd.posts+json" }
+
+[sources.echo]
+url = "http://10.0.0.7"
+forward_headers = ["authorization", "x-request-id"]
+keepalive = 0
+
+[sources.secure]
+url = "https://[fd00::7]:8443/s"
+tls_verify = false
+
+[sources.badtls]
+url = "https://10.0.0.8"
+tls_name = "internal.example.com"
+host_header = "internal.example.com"

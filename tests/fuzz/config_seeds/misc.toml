@@ -1,0 +1,18 @@
+# expect: [metrics] allow: "10.0.0.0/33" is not an IP address or CIDR range.
+# expect: [metrics] port must differ from [gateway] listen.
+# expect: [gateway] path: "graphql" must be a URI path starting with '/'
+# expect: [cache.memcached] host and socket cannot be used together.
+# expect: [sources.a] read_timeout: invalid duration "3 s" (for example 500ms, 3s, 1m).
+# expect: [metrics] buckets must be increasing positive numbers.
+[gateway]
+listen = 8191
+path = "graphql"
+[metrics]
+allow = ["10.0.0.0/8", "10.0.0.0/33"]
+buckets = [0.1, 0.05]
+[cache.memcached]
+host = "127.0.0.1"
+socket = "/run/memcached.sock"
+[sources.a]
+url = "http://10.0.0.1"
+read_timeout = "3 s"

@@ -1,0 +1,48 @@
+# Schema of the configuration tests (t/006-config.t, t/007-server.t):
+# each source is configured differently in t/config/*.toml.
+type Query {
+  usersHeaders: Headers @fetch(source: "users", path: "/headers")
+  postsHeaders: Headers @fetch(source: "posts", path: "/headers")
+  echoHeaders: Headers @fetch(source: "echo", path: "/headers")
+  secureHeaders: Headers @fetch(source: "secure", path: "/headers")
+  badTls: Headers @fetch(source: "badtls", path: "/headers")
+  user(id: ID!): User @fetch(source: "users", path: "/users/{args.id}")
+  cachedUser(id: ID!): User @fetch(source: "users", path: "/users/{args.id}") @cache(ttl: 60)
+  posts(limit: Int = 3): [Post!]! @fetch(source: "posts", path: "/posts?limit={args.limit}")
+}
+
+type Post {
+  id: ID!
+  title: String!
+  authorId: ID @from(key: "author_id")
+  author: User
+    @fetch(source: "users", path: "/users/{parent.authorId}")
+    @batch(path: "/users?ids={keys}", match: "id")
+}
+
+type Mutation {
+  echoPost(input: String!): Headers
+    @fetch(source: "echo", method: "POST", path: "/headers", body: "{\"input\": {args.input}}")
+}
+
+type User {
+  id: ID!
+  name: String!
+}
+
+type Headers {
+  method: String @from(key: "_method")
+  uri: String @from(key: "_uri")
+  body: String @from(key: "_body")
+  authorization: String
+  cookie: String
+  accept: String
+  host: String
+  contentType: String @from(key: "content-type")
+  contentLength: String @from(key: "content-length")
+  acceptLanguage: String @from(key: "accept-language")
+  acceptEncoding: String @from(key: "accept-encoding")
+  userAgent: String @from(key: "user-agent")
+  xApiKey: String @from(key: "x-api-key")
+  xTrace: String @from(key: "x-trace")
+}

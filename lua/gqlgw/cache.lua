@@ -12,6 +12,7 @@
 -- purging a source is a single increment.
 local memcached = require "resty.memcached"
 local lrucache = require "resty.lrucache"
+local metrics = require "gqlgw.metrics"
 local cjson = require "cjson.safe"
 
 local ngx = ngx
@@ -73,6 +74,9 @@ end
 
 local function mark_down(err)
     ngx.log(ngx.WARN, "gqlgw: memcached unavailable, skipping it for ", conf.down_ttl, "s: ", err)
+    if metrics.enabled() then
+        metrics.inc("gqlgw_memcached_errors_total", "")
+    end
     down_until = ngx.now() + conf.down_ttl
     if conf.shm then
         conf.shm:set("gqlgw:memc_down", true, conf.down_ttl)
@@ -164,9 +168,9 @@ function _M.key(ctx, route, rkey)
     return k
 end
 
--- returns { [key] = decoded value } for the keys found
+-- returns { [key] = decoded value } for the keys found, and { [key] = "l1" | "l2" | "l3" }
 function _M.get_multi(ctx, keys)
-    local found, misses = {}, {}
+    local found, misses, levels = {}, {}, {}
     local stats = ctx.stats
     local shm = conf.shm
     local c1 = get_l1()
@@ -174,12 +178,14 @@ function _M.get_multi(ctx, keys)
         local v = c1 and c1:get(k)
         if v ~= nil then
             found[k] = v
+            levels[k] = "l1"
             stats.hits_l1 = stats.hits_l1 + 1
         else
             local js = shm and shm:get(k)
             if js ~= nil then
                 v = decoder.decode(js)
                 found[k] = v
+                levels[k] = "l2"
                 stats.hits_l2 = stats.hits_l2 + 1
                 if c1 then
                     c1:set(k, v, conf.l1_ttl)
@@ -191,13 +197,13 @@ function _M.get_multi(ctx, keys)
     end
     if #misses == 0 or not conf.memcached or memc_down() then
         stats.misses = (stats.misses or 0) + #misses
-        return found
+        return found, levels
     end
     local memc, err = connect()
     if not memc then
         mark_down(err)
         stats.misses = (stats.misses or 0) + #misses
-        return found
+        return found, levels
     end
     local res
     res, err = memc:get(misses)
@@ -205,7 +211,7 @@ function _M.get_multi(ctx, keys)
         mark_down(err)
         memc:close()
         stats.misses = (stats.misses or 0) + #misses
-        return found
+        return found, levels
     end
     release(memc)
     local nmiss = 0
@@ -214,6 +220,7 @@ function _M.get_multi(ctx, keys)
         if r then
             local v = decoder.decode(r[1])
             found[k] = v
+            levels[k] = "l3"
             stats.hits_l3 = stats.hits_l3 + 1
             if shm then
                 shm:set(k, r[1], conf.l2_ttl)
@@ -226,7 +233,7 @@ function _M.get_multi(ctx, keys)
         end
     end
     stats.misses = (stats.misses or 0) + nmiss
-    return found
+    return found, levels
 end
 
 local function write_memcached(premature, items)

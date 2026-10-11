@@ -1,0 +1,9 @@
+# mode: check
+# expect: @fetch(source: "posts") on Query.postsHeaders: no [sources.posts] in the configuration
+# expect: @fetch(source: "badtls") on Query.badTls: no [sources.badtls] in the configuration
+[sources.users]
+url = "${USERS_URL}"
+[sources.echo]
+url = "http://echo"
+[sources.secure]
+url = "https://secure"

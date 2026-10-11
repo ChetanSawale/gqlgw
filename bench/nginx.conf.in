@@ -7,12 +7,14 @@ http {
     access_log off;
     lua_package_path "@ROOT@/lua/?.lua;@ROOT@/lua/?/init.lua;@ROOT@/bench/?.lua;;";
     lua_shared_dict gqlgw_cache 64m;
+    lua_shared_dict gqlgw_metrics 8m;
     init_by_lua_block {
         require("gqlgw").init({
             schema = "@ROOT@/build/bench/schema.gqlb",
             lib = "@ROOT@/build/libgql.so",
             cache = { shm = "gqlgw_cache", l2_ttl = 300 },
             debug_headers = true,
+            @METRICS_OPT@
         })
     }
     upstream backend {
@@ -24,12 +26,14 @@ http {
         location = /graphql {
             set $gqlgw_path "";
             content_by_lua_block { require("gqlgw").serve() }
+            @LOG_BY_LUA@
         }
         location /_src/ {
             internal;
             proxy_http_version 1.1;
             proxy_set_header Connection "";
             proxy_set_header Accept-Encoding "";
+            @UPSTREAM_TIME@
             proxy_pass http://backend$gqlgw_path;
         }
     }

@@ -1,0 +1,8 @@
+# expect: unknown_key.toml:5:1: Unknown key "lisen" in [gateway].
+# expect: unknown_key.toml:7:2: Unknown key "proxy": expected [gateway], [limits], [cache], [nginx], [metrics], [purge] or [sources.<name>].
+[gateway]
+listen = 8080
+lisen = 8081
+
+[proxy]
+x = 1

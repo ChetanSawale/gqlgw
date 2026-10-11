@@ -10,3 +10,5 @@ leak-*
 timeout-*
 .deps-install.log
 src/prelude.inc
+t/config/run/
+t/config/run-server/

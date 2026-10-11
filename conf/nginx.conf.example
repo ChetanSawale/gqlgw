@@ -1,4 +1,8 @@
-# gqlgw: example OpenResty configuration.
+# gqlgw: hand-written OpenResty configuration.
+#
+# The recommended way is gqlgw.toml + `gqlc render`, which generates the
+# equivalent of this file (see README.md and examples/docker/gqlgw.toml).
+# This example shows what a configuration without it looks like:
 #
 #   gqlc compile -o /etc/gqlgw/schema.gqlb schema.graphqls   # also writes schema.routes.lua
 #   openresty -c /etc/gqlgw/nginx.conf

@@ -1,0 +1,15 @@
+# mode: check
+# status: 0
+# ${VAR} values are only validated by gqlc render
+[gateway]
+listen = "${tp://h/a b"
+[sources.e]
+url = "http://h/{args.PORT}"
+[limits]
+depth = "${DEPTH:-10}"
+[sourceo]
+url = "${ECHO_URL}"
+[sources.secure]
+url = "${SECURE_URL}"
+[sources.badtls]
+url = "${BADTLS_URL}"

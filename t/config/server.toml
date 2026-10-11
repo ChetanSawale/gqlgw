@@ -1,0 +1,33 @@
+# Configuration of t/007-server.t: default mode, gqlgw.conf brings its own server {}.
+[gateway]
+listen = "127.0.0.1:${GQLGW_TEST_PORT:-19845}"
+schema = "../schemas/gw.gqlb"
+lib = "${GQLGW_TEST_ROOT}/build/libgql.so"
+debug_headers = true
+access_log = "off"
+
+[cache]
+shm_size = 0
+
+[metrics]
+enabled = false
+
+[purge]
+enabled = false
+
+[sources.users]
+url = "http://127.0.0.1:${TEST_NGINX_SERVER_PORT:-1984}/__mock"
+
+[sources.posts]
+url = "http://127.0.0.1:${TEST_NGINX_SERVER_PORT:-1984}/__mock"
+
+[sources.echo]
+url = "http://127.0.0.1:${TEST_NGINX_SERVER_PORT:-1984}/__mock"
+
+[sources.secure]
+url = "https://127.0.0.1:${GQLGW_TEST_TLS_PORT:-19843}/__mock"
+tls_verify = false
+
+[sources.badtls]
+url = "https://127.0.0.1:${GQLGW_TEST_TLS_PORT:-19843}/__mock"
+tls_verify = false

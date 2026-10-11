@@ -3,10 +3,12 @@
 #   - OpenResty (compilé depuis les sources)
 #   - Test::Nginx (cpanm --local-lib)
 #   - graphql-js (oracle de test, npm)
+#   - corpus toml-test (fichiers uniquement, pas besoin de Go)
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 DEPS="$ROOT/.deps"
 OR_VER="${OR_VER:-1.31.1.1}"
+TOML_TEST_VER="${TOML_TEST_VER:-2.2.0}"
 JOBS="$(nproc)"
 
 mkdir -p "$DEPS/src"
@@ -35,3 +37,12 @@ if [ ! -d "$ROOT/tests/oracle/node_modules/graphql" ]; then
     (cd "$ROOT/tests/oracle" && npm install --no-audit --no-fund --silent)
 fi
 node -e "console.log('graphql-js', require('$ROOT/tests/oracle/node_modules/graphql/package.json').version)"
+
+if [ ! -f "$DEPS/toml-test/tests/files-toml-1.1.0" ]; then
+    echo ">> toml-test $TOML_TEST_VER"
+    cd "$DEPS/src"
+    curl -fsSL -o "toml-test-$TOML_TEST_VER.tar.gz" "https://github.com/toml-lang/toml-test/archive/refs/tags/v$TOML_TEST_VER.tar.gz"
+    tar xzf "toml-test-$TOML_TEST_VER.tar.gz"
+    ln -sfn "src/toml-test-$TOML_TEST_VER" "$DEPS/toml-test"
+fi
+echo "toml-test $(basename "$(readlink "$DEPS/toml-test")")"

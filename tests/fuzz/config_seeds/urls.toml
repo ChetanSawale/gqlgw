@@ -1,0 +1,21 @@
+# expect: [sources.a] url "ftp://x" must start with http:// or https://.
+# expect: [sources.b] url "http://user@h": user info, query strings and fragments are not supported.
+# expect: [sources.c] url "http://h:99999": invalid port.
+# expect: [sources.d] url "http://h/a b": invalid character ' ' in the path prefix.
+# expect: [sources.e] url "http://h/{args.id}": invalid character '{' in the path prefix.
+# expect: [sources.f] url "http://[::zz]/": invalid IPv6 address.
+# expect: [sources.g] url is required.
+[sources.a]
+url = "ftp://x"
+[sources.b]
+url = "http://user@h"
+[sources.c]
+url = "http://h:99999"
+[sources.d]
+url = "http://h/a b"
+[sources.e]
+url = "http://h/{args.id}"
+[sources.f]
+url = "http://[::zz]/"
+[sources.g]
+read_timeout = "1s"

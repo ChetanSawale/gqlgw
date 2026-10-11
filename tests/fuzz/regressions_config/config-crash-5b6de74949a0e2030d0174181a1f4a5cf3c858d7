@@ -1,0 +1,9 @@
+# env: USERS_URL=http://10.0.0.1:8080 TIMEOUT=7s EMPTY=
+# status: 0
+[gateway]
+schema = "../../../t/schemas/gw.gqlb"
+[sources.users]
+url = "${USERS_URL}"
+read_timeout = "${TIMEOUT}"
+connect_timeout = "${EMPTY:-2s}"
+set_headers = { X-Literal = "$${NOT_A_VAR}" }

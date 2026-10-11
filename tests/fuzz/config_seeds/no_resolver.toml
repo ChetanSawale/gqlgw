@@ -1,0 +1,8 @@
+# expect: Source "users" uses a host name but no DNS resolver is known: set [nginx] resolver.
+# expect: [cache.memcached] host "memcached" is a name but no DNS resolver is known: set [nginx] resolver.
+[nginx]
+resolver = []
+[cache.memcached]
+host = "memcached"
+[sources.users]
+url = "http://users:8080"

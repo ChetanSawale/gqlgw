@@ -50,6 +50,17 @@ function _M.handle()
         return send(200, out)
     end
 
+    -- the request headers the gateway sent upstream (configuration tests)
+    if uri == "/headers" then
+        count("headers")
+        ngx.req.read_body()
+        local out = { _method = method, _uri = ngx.var.request_uri, _body = ngx.req.get_body_data() or cjson.null }
+        for k, v in pairs(ngx.req.get_headers(100)) do
+            out[k] = type(v) == "table" and table.concat(v, ", ") or v
+        end
+        return send(200, out)
+    end
+
     -- debugging aid: echoes what the gateway sent upstream
     if uri:find("^/echo") then
         count("echo")

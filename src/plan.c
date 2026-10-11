@@ -231,6 +231,7 @@ struct gql_plan {
     gql_hmap memo;
     uint32_t max_fields;
     gql_collector col;
+    uint32_t opname_off, opname_len;    /* in str */
 };
 
 static void perr(gql_plan *p, const gql_loc *l, const char *fmt, ...) GQL_PRINTF(3, 4);
@@ -507,6 +508,14 @@ static int coerce_variables(gql_plan *p, const ast_def *op, const gql_json *vars
     return p->ok ? 0 : -1;
 }
 
+const char *gql_plan_opname_internal(const gql_plan *p, size_t *len);
+
+const char *gql_plan_opname_internal(const gql_plan *p, size_t *len)
+{
+    *len = p->opname_len;
+    return p->opname_len ? p->str.p + p->opname_off : "";
+}
+
 /* entry point used by api.c */
 gql_plan *gql_plan_build_internal(const gql_schema *s, const ast_doc *doc, const gql_hmap *frags,
                                   const ast_def **fragdefs, uint32_t nfrags, const char *opname, size_t opn,
@@ -566,6 +575,8 @@ gql_plan *gql_plan_build_internal(const gql_schema *s, const ast_doc *doc, const
         perr(p, NULL, "Must provide an operation.");
         goto finish;
     }
+    p->opname_off = put_str(p, op->name.p, op->name.n);
+    p->opname_len = op->name.n;
     root = op->op == OP_QUERY ? s->query_type : op->op == OP_MUTATION ? s->mutation_type : GQL_NONE;
     if (root == GQL_NONE) {
         perr(p, &op->loc, "The %s operation is not supported by the schema.", gql_op_name(op->op));

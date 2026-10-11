@@ -1,0 +1,42 @@
+# Configuration of t/006-config.t, rendered with --locations-only by `make test-t`:
+# gqlgw.http.conf goes in the http {} of Test::Nginx, gqlgw.locations.conf in its server {}.
+[gateway]
+schema = "../schemas/gw.gqlb"
+lib = "${GQLGW_TEST_ROOT}/build/libgql.so"
+debug_headers = true
+
+[cache]
+shm_size = "8m"
+l2_ttl = 60
+
+[nginx]
+resolver = "${GQLGW_TEST_RESOLVER:-auto}"
+resolver_ipv6 = false
+
+[metrics]
+port = "${GQLGW_TEST_ADMIN_PORT:-19844}"
+exclude_operations = ["^Excluded"]
+
+# default: allowlist with Authorization only
+[sources.users]
+url = "http://127.0.0.1:${TEST_NGINX_SERVER_PORT:-1984}/__mock"
+
+# denylist: everything from the client except Cookie and X-Trace
+[sources.posts]
+url = "http://127.0.0.1:${TEST_NGINX_SERVER_PORT:-1984}/__mock/"
+drop_headers = ["cookie", "x-trace"]
+
+[sources.echo]
+url = "http://127.0.0.1:${TEST_NGINX_SERVER_PORT:-1984}/__mock"
+forward_headers = ["X-Trace", "Accept-Language"]
+set_headers = { X-Api-Key = "k$y-${GQLGW_TEST_KEY:-secret}" }
+
+# TLS with a self-signed certificate for "localhost", resolved through [nginx] resolver
+[sources.secure]
+url = "https://localhost:${GQLGW_TEST_TLS_PORT:-19843}/__mock"
+ca = "run/tls/cert.pem"
+
+# same server, verified against another CA: must fail
+[sources.badtls]
+url = "https://localhost:${GQLGW_TEST_TLS_PORT:-19843}/__mock"
+ca = "run/tls/other.pem"

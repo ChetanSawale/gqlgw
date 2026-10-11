@@ -1,0 +1,32 @@
+# The example gateway with memcached and a mock of its two REST services.
+#
+#   make image                       # builds gqlgw:latest, the base image
+#   docker compose up --build
+#   curl -s localhost:8080/graphql -H 'Content-Type: application/json' \
+#        -d '{"query":"{ posts(limit: 3) { title author { name } } }"}'
+#   curl -s localhost:8191/gqlgw_metrics
+services:
+  gateway:
+    build: .
+    ports:
+      - "8080:8080"
+      - "8191:8191"
+    environment:
+      USERS_URL: http://backend:8080
+      POSTS_URL: http://backend:8080
+      GQLGW_DEBUG_HEADERS: "true"
+    read_only: true
+    tmpfs:
+      - /tmp
+    depends_on:
+      - memcached
+      - backend
+
+  memcached:
+    image: memcached:1.6
+
+  backend:
+    image: openresty/openresty:1.31.1.1-resolute
+    volumes:
+      - ./mock/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ../../t/lib/mock.lua:/usr/local/openresty/site/lualib/mock.lua:ro

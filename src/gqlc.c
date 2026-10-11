@@ -1,15 +1,21 @@
-/* gqlc - gqlgw schema compiler and debugging tool.
+/* gqlc - gqlgw schema compiler, configuration renderer and debugging tool.
  *
- *   gqlc compile [-o out.gqlb] [-r out.routes.lua] schema.graphqls
+ *   gqlc compile [-c gqlgw.toml] [-o out.gqlb] [-r out.routes.lua] schema.graphqls
+ *   gqlc render  -c gqlgw.toml [-o dir] [--locations-only]
  *   gqlc check   schema.gqlb query.graphql
  *   gqlc plan    schema.gqlb query.graphql [variables.json] [operationName]
  *   gqlc introspect schema.gqlb
  */
 #include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
+#include "config.h"
 #include "gql.h"
 #include "gqlb.h"
 #include "sdl.h"
@@ -54,9 +60,66 @@ static char *replace_ext(const char *path, const char *ext)
     return out;
 }
 
+/* loads gqlgw.toml; prints the errors */
+static int load_config(gqlgw_config *cfg, const char *path, gqlgw_cfg_mode mode, const char *resolv_conf)
+{
+    size_t n;
+    char *src = read_file(path, &n);
+    gql_errors errs;
+    gql_buf b;
+    int rc;
+    if (!src)
+        return -1;
+    errs_init(&errs, 100);
+    buf_init(&b);
+    rc = gqlgw_config_load(cfg, path, src, n, mode, NULL, NULL, resolv_conf, &errs);
+    errs_to_text(&errs, path, &b);
+    if (b.len)
+        fprintf(stderr, "%s", buf_cstr(&b));
+    buf_free(&b);
+    errs_free(&errs);
+    free(src);
+    return rc;
+}
+
+/* every @fetch source must be configured in [sources] */
+static int check_sources(const gql_compiled *c, const gqlgw_config *cfg, const char *cfg_path, int quiet)
+{
+    const gql_schema *s = gql_compiled_schema(c);
+    uint32_t i, k, n = gql_compiled_nroutes(c);
+    int rc = 0;
+    for (i = 0; i < n; i++) {
+        const gql_route *r = gql_compiled_route(c, i);
+        const gql_field_rec *f = &s->fields[r->field];
+        for (k = 0; k < i; k++)
+            if (gql_compiled_route(c, k)->source.n == r->source.n &&
+                !memcmp(gql_compiled_route(c, k)->source.p, r->source.p, r->source.n))
+                break;
+        if (k < i || gqlgw_config_source(cfg, r->source.p, r->source.n))
+            continue;
+        fprintf(stderr, "%s: @fetch(source: \"%.*s\") on %s.%s: no [sources.%.*s] in the configuration\n", cfg_path,
+                (int)r->source.n, r->source.p, GQL_S(s, s->types[f->owner].name), GQL_S(s, f->name),
+                (int)r->source.n, r->source.p);
+        rc = 1;
+    }
+    for (k = 0; k < cfg->nsources && !quiet; k++) {
+        for (i = 0; i < n; i++) {
+            const gql_route *r = gql_compiled_route(c, i);
+            if (strlen(cfg->sources[k].name) == r->source.n && !memcmp(cfg->sources[k].name, r->source.p, r->source.n))
+                break;
+        }
+        if (i == n)
+            fprintf(stderr, "%s:%u:%u: warning: source \"%s\" is not used by the schema\n", cfg_path,
+                    cfg->sources[k].loc.line, cfg->sources[k].loc.col, cfg->sources[k].name);
+    }
+    return rc;
+}
+
 static int cmd_compile(int argc, char **argv)
 {
-    const char *in = NULL, *out = NULL, *routes = NULL;
+    const char *in = NULL, *out = NULL, *routes = NULL, *cfg_path = NULL;
+    gqlgw_config cfg;
+    int have_cfg = 0;
     int quiet = 0;
     char *out_d = NULL, *routes_d = NULL, *src;
     size_t n;
@@ -71,6 +134,8 @@ static int cmd_compile(int argc, char **argv)
             out = argv[++i];
         else if (!strcmp(argv[i], "-r") && i + 1 < argc)
             routes = argv[++i];
+        else if (!strcmp(argv[i], "-c") && i + 1 < argc)
+            cfg_path = argv[++i];
         else if (!strcmp(argv[i], "-q"))
             quiet = 1;
         else if (argv[i][0] == '-') {
@@ -80,8 +145,19 @@ static int cmd_compile(int argc, char **argv)
             in = argv[i];
     }
     if (!in) {
-        fprintf(stderr, "usage: gqlc compile [-o out.gqlb] [-r out.routes.lua] schema.graphqls\n");
+        fprintf(stderr, "usage: gqlc compile [-q] [-c gqlgw.toml] [-o out.gqlb] [-r out.routes.lua] schema.graphqls\n");
         return 2;
+    }
+    if (cfg_path) {
+        if (load_config(&cfg, cfg_path, CFG_CHECK, NULL)) {
+            gqlgw_config_free(&cfg);
+            return 1;
+        }
+        have_cfg = 1;
+        if (!out)
+            out = cfg.gw.schema;
+        if (!routes && cfg.gw.routes)
+            routes = cfg.gw.routes;
     }
     if (!out)
         out = out_d = replace_ext(in, ".gqlb");
@@ -107,6 +183,8 @@ static int cmd_compile(int argc, char **argv)
     if (!c) {
         errs_to_text(&errs, in, &b);
         fprintf(stderr, "%s", buf_cstr(&b));
+    } else if (have_cfg && check_sources(c, &cfg, cfg_path, quiet)) {
+        /* reported */
     } else if (gql_gqlb_write(gql_compiled_schema(c), out, err, sizeof err) ||
                gql_routes_write(c, routes, in, err, sizeof err)) {
         fprintf(stderr, "gqlc: %s\n", err);
@@ -125,6 +203,127 @@ static int cmd_compile(int argc, char **argv)
 done:
     free(out_d);
     free(routes_d);
+    if (have_cfg)
+        gqlgw_config_free(&cfg);
+    return rc;
+}
+
+/* writes a file atomically, readable by its owner only (it may hold secrets) */
+static int write_private(const char *dir, const char *name, const gql_buf *b)
+{
+    char path[PATH_MAX], tmp[PATH_MAX];
+    int fd;
+    size_t off = 0;
+    snprintf(path, sizeof path, "%s/%s", dir, name);
+    snprintf(tmp, sizeof tmp, "%s/.%s.%ld", dir, name, (long)getpid());
+    fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) {
+        fprintf(stderr, "gqlc: %s: %s\n", tmp, strerror(errno));
+        return -1;
+    }
+    while (off < b->len) {
+        ssize_t w = write(fd, b->p + off, b->len - off);
+        if (w < 0) {
+            if (errno == EINTR)
+                continue;
+            fprintf(stderr, "gqlc: %s: %s\n", tmp, strerror(errno));
+            close(fd);
+            unlink(tmp);
+            return -1;
+        }
+        off += (size_t)w;
+    }
+    if (close(fd) || rename(tmp, path)) {
+        fprintf(stderr, "gqlc: %s: %s\n", path, strerror(errno));
+        unlink(tmp);
+        return -1;
+    }
+    return 0;
+}
+
+static int cmd_render(int argc, char **argv)
+{
+    const char *cfg_path = NULL, *outdir = ".", *resolv = NULL;
+    int locations_only = 0, quiet = 0, i, rc = 1;
+    gqlgw_config cfg;
+    gql_schema *s;
+    char err[512], dir[PATH_MAX], lua_path[PATH_MAX + 16], routes[PATH_MAX];
+    gql_buf lua, http, loc;
+
+    for (i = 0; i < argc; i++) {
+        if (!strcmp(argv[i], "-c") && i + 1 < argc)
+            cfg_path = argv[++i];
+        else if (!strcmp(argv[i], "-o") && i + 1 < argc)
+            outdir = argv[++i];
+        else if (!strcmp(argv[i], "--resolv-conf") && i + 1 < argc)
+            resolv = argv[++i];
+        else if (!strcmp(argv[i], "--locations-only"))
+            locations_only = 1;
+        else if (!strcmp(argv[i], "-q"))
+            quiet = 1;
+        else {
+            fprintf(stderr, "gqlc render: unknown argument %s\n", argv[i]);
+            return 2;
+        }
+    }
+    if (!cfg_path) {
+        fprintf(stderr, "usage: gqlc render -c gqlgw.toml [-o dir] [--locations-only] [--resolv-conf file]\n");
+        return 2;
+    }
+    if (load_config(&cfg, cfg_path, CFG_RENDER, resolv)) {
+        gqlgw_config_free(&cfg);
+        return 1;
+    }
+    /* the schema must have been compiled (gqlc compile, at image build time) */
+    if (!(s = gql_schema_open(cfg.gw.schema, err, sizeof err))) {
+        fprintf(stderr, "gqlc: %s\ngqlc: compile the schema first: gqlc compile -c %s schema.graphqls\n", err, cfg_path);
+        gqlgw_config_free(&cfg);
+        return 1;
+    }
+    gql_schema_close(s);
+    if (cfg.gw.routes) {
+        snprintf(routes, sizeof routes, "%s", cfg.gw.routes);
+    } else {
+        size_t n = strlen(cfg.gw.schema);
+        if (n > 5 && !strcmp(cfg.gw.schema + n - 5, ".gqlb"))
+            n -= 5;
+        snprintf(routes, sizeof routes, "%.*s.routes.lua", (int)n, cfg.gw.schema);
+    }
+    if (access(routes, R_OK)) {
+        fprintf(stderr, "gqlc: %s: %s (it is written by gqlc compile next to the schema)\n", routes, strerror(errno));
+        gqlgw_config_free(&cfg);
+        return 1;
+    }
+    if (mkdir(outdir, 0700) && errno != EEXIST) {
+        fprintf(stderr, "gqlc: %s: %s\n", outdir, strerror(errno));
+        gqlgw_config_free(&cfg);
+        return 1;
+    }
+    if (!realpath(outdir, dir)) {
+        fprintf(stderr, "gqlc: %s: %s\n", outdir, strerror(errno));
+        gqlgw_config_free(&cfg);
+        return 1;
+    }
+    snprintf(lua_path, sizeof lua_path, "%s/gqlgw.lua", dir);
+    buf_init(&lua);
+    buf_init(&http);
+    buf_init(&loc);
+    gqlgw_render_lua(&cfg, cfg_path, &lua);
+    gqlgw_render_nginx(&cfg, lua_path, cfg_path, &http, locations_only ? &loc : NULL);
+    if (lua.oom || http.oom || loc.oom) {
+        fprintf(stderr, "gqlc: out of memory\n");
+    } else if (!write_private(dir, "gqlgw.lua", &lua) &&
+               !(locations_only ? write_private(dir, "gqlgw.http.conf", &http) || write_private(dir, "gqlgw.locations.conf", &loc)
+                                : write_private(dir, "gqlgw.conf", &http))) {
+        if (!quiet)
+            fprintf(stderr, "gqlc: %s -> %s/%s, %s (%u sources)\n", cfg_path, dir,
+                    locations_only ? "gqlgw.http.conf, gqlgw.locations.conf" : "gqlgw.conf", "gqlgw.lua", cfg.nsources);
+        rc = 0;
+    }
+    buf_free(&lua);
+    buf_free(&http);
+    buf_free(&loc);
+    gqlgw_config_free(&cfg);
     return rc;
 }
 
@@ -132,7 +331,8 @@ static void usage(void)
 {
     fprintf(stderr,
             "usage:\n"
-            "  gqlc compile [-q] [-o out.gqlb] [-r out.routes.lua] schema.graphqls\n"
+            "  gqlc compile [-q] [-c gqlgw.toml] [-o out.gqlb] [-r out.routes.lua] schema.graphqls\n"
+            "  gqlc render -c gqlgw.toml [-o dir] [--locations-only] [--resolv-conf file]\n"
             "  gqlc check schema.gqlb query.graphql\n"
             "  gqlc plan schema.gqlb query.graphql [variables.json] [operationName]\n"
             "  gqlc introspect schema.gqlb [introspection-query.graphql]\n");
@@ -382,6 +582,8 @@ int main(int argc, char **argv)
     }
     if (!strcmp(argv[1], "compile"))
         return cmd_compile(argc - 2, argv + 2);
+    if (!strcmp(argv[1], "render"))
+        return cmd_render(argc - 2, argv + 2);
     if (!strcmp(argv[1], "check"))
         return cmd_check(argc - 2, argv + 2);
     if (!strcmp(argv[1], "plan"))

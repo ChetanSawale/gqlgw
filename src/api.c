@@ -162,6 +162,17 @@ GQL_API void gql_doc_free(gql_doc *d)
     free(d);
 }
 
+const char *gql_plan_opname_internal(const gql_plan *p, size_t *len);
+
+GQL_API const char *gql_plan_operation_name(const gql_plan *p, size_t *len)
+{
+    size_t n = 0;
+    const char *r = p ? gql_plan_opname_internal(p, &n) : "";
+    if (len)
+        *len = n;
+    return r;
+}
+
 GQL_API gql_plan *gql_plan_new(const gql_schema *s, const gql_doc *d, const char *op, size_t opn,
                                const char *vars, size_t varsn, const gql_limits *lim)
 {

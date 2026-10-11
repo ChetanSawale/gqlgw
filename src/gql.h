@@ -104,6 +104,8 @@ GQL_API gql_plan *gql_plan_new(const gql_schema *s, const gql_doc *d, const char
 GQL_API int gql_plan_ok(const gql_plan *p);
 GQL_API const char *gql_plan_errors(const gql_plan *p, size_t *len);
 GQL_API const gql_plan_view *gql_plan_get_view(const gql_plan *p);
+/* name of the selected operation ("" when anonymous or not selected) */
+GQL_API const char *gql_plan_operation_name(const gql_plan *p, size_t *len);
 GQL_API void gql_plan_free(gql_plan *p);
 
 #endif

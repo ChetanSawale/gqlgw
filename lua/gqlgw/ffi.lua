@@ -93,6 +93,7 @@ gql_plan *gql_plan_new(const gql_schema *s, const gql_doc *d, const char *op, si
 int gql_plan_ok(const gql_plan *p);
 const char *gql_plan_errors(const gql_plan *p, size_t *len);
 const gql_plan_view *gql_plan_get_view(const gql_plan *p);
+const char *gql_plan_operation_name(const gql_plan *p, size_t *len);
 void gql_plan_free(gql_plan *p);
 ]]
 

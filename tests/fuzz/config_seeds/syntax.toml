@@ -1,0 +1,4 @@
+# expect: syntax.toml:4:14: expected a newline after the value
+[gateway]
+listen = 8080
+server = "a" "b"

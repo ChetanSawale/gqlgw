@@ -1,0 +1,17 @@
+# mode: check
+# status: 0
+# ${VAR} values are only validated by gqlc render
+[gateway]
+listen = "${PORT}"
+[limits]
+depth = "${DEPTH:-10}"
+[sources.users]
+url = "${USERS_URL}"
+[sources.posts]
+url = "${POSTS_URL}"
+[sources.echo]
+url = "${ECHO_URL}"
+[sources.secure]
+url = "${SECURE_URL}"
+[sources.badtls]
+url = "${BADTLS_URL}"

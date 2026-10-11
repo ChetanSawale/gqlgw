@@ -9,14 +9,24 @@ CONNS="${CONNS:-16}"
 export BACKEND_LATENCY="${BACKEND_LATENCY:-0.002}"
 mkdir -p "$B/logs" "$B/conf"
 "$ROOT/build/gqlc" compile -q -o "$B/schema.gqlb" "$ROOT/bench/schema.graphqls"
-sed "s|@ROOT@|$ROOT|g" "$ROOT/bench/nginx.conf.in" > "$B/conf/nginx.conf"
+# METRICS=1: Prometheus metrics on, as rendered by gqlc (to measure their cost)
+if [ "${METRICS:-0}" = 1 ]; then
+    sed -e "s|@ROOT@|$ROOT|g" \
+        -e 's|@METRICS_OPT@|metrics = { shm = "gqlgw_metrics" },|' \
+        -e 's|@LOG_BY_LUA@|log_by_lua_block { require("gqlgw").log() }|' \
+        -e 's|@UPSTREAM_TIME@|more_set_headers "X-Gqlgw-Upstream-Time: $upstream_header_time";|' \
+        "$ROOT/bench/nginx.conf.in" > "$B/conf/nginx.conf"
+else
+    sed -e "s|@ROOT@|$ROOT|g" -e "s|@METRICS_OPT@||" -e "s|@LOG_BY_LUA@||" -e "s|@UPSTREAM_TIME@||" \
+        "$ROOT/bench/nginx.conf.in" > "$B/conf/nginx.conf"
+fi
 "$NGINX" -p "$B" -c conf/nginx.conf -s stop 2>/dev/null || true
 sleep 0.3
 "$NGINX" -p "$B" -c conf/nginx.conf
 trap '"$NGINX" -p "$B" -c conf/nginx.conf -s stop' EXIT
 sleep 0.5
 
-out="$ROOT/bench/RESULTS.md"
+out="${OUT:-$ROOT/bench/RESULTS.md}"
 {
     echo "# Benchmark"
     echo

@@ -1,0 +1,29 @@
+# gqlgw configuration (TOML 1.1).
+#
+# String values may use ${VAR}, ${VAR:-default} and ${VAR:?message}: they are
+# read from the environment when the container starts (gqlc render).
+
+[gateway]
+listen = 8080
+access_log = "/dev/stdout"
+debug_headers = "${GQLGW_DEBUG_HEADERS:-false}"
+
+[cache]
+shm_size = "64m"
+l2_ttl = 5
+
+[cache.memcached]
+host = "${MEMCACHED_HOST:-memcached}"
+port = "${MEMCACHED_PORT:-11211}"
+
+[metrics]
+port = 8191
+exclude_operations = ["^IntrospectionQuery$"]
+
+# one section per @fetch(source: "...") of the schema
+[sources.users]
+url = "${USERS_URL:?set USERS_URL to the users service, for example http://users:8080}"
+
+[sources.posts]
+url = "${POSTS_URL:?set POSTS_URL to the posts service, for example http://posts:8080}"
+forward_headers = ["Authorization", "Accept-Language"]

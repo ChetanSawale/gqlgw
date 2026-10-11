@@ -1,0 +1,21 @@
+# expect: [sources.a] forward_headers (allowlist) and drop_headers (denylist) cannot be used together.
+# expect: [sources.b] forward_headers: the Host header is managed by gqlgw (see host_header).
+# expect: [sources.c] drop_headers: invalid header name "X Y" (letters, digits and '-').
+# expect: [sources.d] set_headers: the Content-Type header is managed by gqlgw.
+# expect: [sources.e] set_headers: header values cannot contain control characters.
+[sources.a]
+url = "http://h"
+forward_headers = ["authorization"]
+drop_headers = ["cookie"]
+[sources.b]
+url = "http://h"
+forward_headers = ["Host"]
+[sources.c]
+url = "http://h"
+drop_headers = ["X Y"]
+[sources.d]
+url = "http://h"
+set_headers = { Content-Type = "text/plain" }
+[sources.e]
+url = "http://h"
+set_headers = { X-A = "a\nb" }

@@ -1,0 +1,64 @@
+"""
+Example schema: a blog served by two REST services (users, posts).
+"""
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  "A user by id."
+  user(id: ID!): User @fetch(source: "users", path: "/users/{args.id}")
+
+  "Latest posts."
+  posts(limit: Int = 20, tag: String): [Post!]!
+    @fetch(source: "posts", path: "/posts?limit={args.limit}&tag={args.tag}")
+
+  "Search anything."
+  search(q: String!): [SearchResult!]! @fetch(source: "posts", path: "/search?q={args.q}", select: "results")
+}
+
+type Mutation {
+  renameUser(id: ID!, name: String!): User
+    @fetch(source: "users", method: "PATCH", path: "/users/{args.id}", body: "{\"name\": {args.name}}")
+  createPost(input: PostInput!): Post
+    @fetch(source: "posts", method: "POST", path: "/posts", body: "{args.input}")
+}
+
+interface Node {
+  id: ID!
+}
+
+type User implements Node @cache(ttl: 300) {
+  id: ID!
+  name: String!
+  email: String @deprecated(reason: "Use contact.email")
+  createdAt: String @from(key: "created_at")
+  posts: [Post!]! @fetch(source: "posts", path: "/posts?author={parent.id}")
+}
+
+type Post implements Node {
+  id: ID!
+  title: String!
+  body: String
+  tags: [String!]!
+  authorId: ID! @from(key: "author_id")
+  author: User!
+    @fetch(source: "users", path: "/users/{parent.authorId}")
+    @batch(path: "/users?ids={keys}", match: "id", max: 50)
+}
+
+union SearchResult @discriminator(key: "kind") = User | Post
+
+input PostInput {
+  title: String!
+  body: String
+  tags: [String!] = []
+  status: Status = DRAFT
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED @deprecated
+}
