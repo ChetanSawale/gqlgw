@@ -17,8 +17,13 @@ jobs:
     name: make test
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    # the base image of the gqlgw image: same OpenResty, same glibc
-    container: openresty/openresty:1.31.1.1-resolute
+    # the base image of the gqlgw image: same OpenResty, same glibc. --init: the
+    # nginx started by Test::Nginx daemonizes, and the job container's PID 1
+    # (tail -f /dev/null) never reaps it; Test::Nginx would then wait 3 s per
+    # test for the zombie to exit.
+    container:
+      image: openresty/openresty:1.31.1.1-resolute
+      options: --init
     steps:
       - name: System packages
         run: |
@@ -56,7 +61,9 @@ jobs:
     name: fuzzing (regressions + 30 s per target)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    container: openresty/openresty:1.31.1.1-resolute
+    container:
+      image: openresty/openresty:1.31.1.1-resolute
+      options: --init
     steps:
       - name: System packages
         run: |
