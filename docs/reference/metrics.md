@@ -83,6 +83,19 @@ sum by (source) (rate(gqlgw_cache_total{level!="miss"}[5m]))
 increase(gqlgw_field_requests_total{coordinate="User.email"}[30d]) > 0
 ```
 
+## Grafana dashboard
+
+[`examples/grafana/gqlgw.json`](../../examples/grafana/gqlgw.json) is a ready-made dashboard covering
+every panel suggested above: request rate and error ratio by operation, p50/p95/p99 latency, upstream
+requests and p95 latency by source, cache hit ratios, batching, fetch rounds, and the deployed version
+with the schema hash. It expects a Prometheus data source scraping `/gqlgw_metrics`.
+
+Import it in Grafana with **Dashboards → New → Import**, paste the JSON (or upload the file), and pick
+your Prometheus data source. The `operation` and `source` variables at the top filter the panels.
+
+<!-- Screenshot: capture against the example gateway (examples/docker) with traffic and save as
+     docs/assets/grafana-dashboard.png, then embed it here. -->
+
 ## How they are collected
 
 ```mermaid
